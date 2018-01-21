@@ -5,6 +5,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -12,7 +13,8 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Xml.Serialization;
-using AutoIt.Properties;
+using AutoIt.OSD.Background.Properties;
+using AutoIt.Windows;
 using Microsoft.Win32;
 
 namespace AutoIt.OSD.Background
@@ -87,6 +89,31 @@ namespace AutoIt.OSD.Background
             }
         }
 
+        private void BringToFrontOfWindowsSetupProgress()
+        {
+            // Find the window(s) (should only be one) with the FirstUXWndClass
+            List<IntPtr> progressWindows = Management.FindWindowsWithClass("FirstUXWndClass").ToList();
+
+            const uint flag = NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE;
+
+            // If there are no progress windows then just move to bottom most
+            if (progressWindows.Count == 0)
+            {
+                NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+                return;
+            }
+
+            // Set z order so that our window is just above the windows setup one
+            //uint flag = AutoIt.Windows.NativeMethods.SWP_NOMOVE | AutoIt.Windows.NativeMethods.SWP_NOSIZE;
+            //MessageBox.Show(AutoIt.Windows.Management.GetWindowText(progressWindow));    
+            //AutoIt.Windows.NativeMethods.SetWindowPos(Handle, progressWindow, 0, 0, 0, 0, flag);
+            NativeMethods.SetWindowPos(progressWindows[0], Handle, 0, 0, 0, 0, flag);
+
+            //AutoIt.Windows.NativeMethods.SetWindowPos(Handle, AutoIt.Windows.NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+            //AutoIt.Windows.NativeMethods.ShowWindow(progressWindow, AutoIt.Windows.NativeMethods.SW_SHOWNORMAL);
+            //AutoIt.Windows.NativeMethods.SetParent(Handle, progressWindow);
+        }
+
         /// <summary>
         ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
         /// </summary>
@@ -140,9 +167,9 @@ namespace AutoIt.OSD.Background
             }
 
             // Send to back
-            SendToBack();
+            //SendToBack();
 
-            // Make sure picture box is bottom most control
+            // Make sure picture box is bottom most control on our form
             pictureBoxBackground.SendToBack();
 
             // First update of background image
@@ -176,6 +203,8 @@ namespace AutoIt.OSD.Background
 
             // We don't want any other versions running
             KillPreviousInstance();
+
+            BringToFrontOfWindowsSetupProgress();
 
             // Start the refresh timer
             timerRefresh.Interval = (int)TimeSpan.FromSeconds(RefreshInervalSecs).TotalMilliseconds;

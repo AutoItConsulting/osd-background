@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace AutoIt.Properties {
+namespace AutoIt.OSD.Background.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

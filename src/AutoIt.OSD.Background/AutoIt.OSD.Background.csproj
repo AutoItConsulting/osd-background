@@ -7,7 +7,7 @@
     <ProjectGuid>{E764D3F0-CDCB-4773-B00F-A3187C67D447}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AutoIt</RootNamespace>
+    <RootNamespace>AutoIt.OSD.Background</RootNamespace>
     <AssemblyName>AutoIt.OSD.Background</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -50,7 +50,7 @@
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
-    <ApplicationManifest>OSD\Background\app.manifest</ApplicationManifest>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\main.ico</ApplicationIcon>
@@ -72,25 +72,25 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OSD\Background\FormBackground.cs">
+    <Compile Include="FormBackground.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OSD\Background\FormBackground.Designer.cs">
+    <Compile Include="FormBackground.Designer.cs">
       <DependentUpon>FormBackground.cs</DependentUpon>
     </Compile>
-    <Compile Include="OSD\Background\Options.cs" />
-    <Compile Include="OSD\Background\Program.cs" />
+    <Compile Include="Options.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Windows\Management.cs" />
-    <Compile Include="Windows\NativeMethods.cs" />
-    <Compile Include="Controls\SimpleProgressBar.cs">
+    <Compile Include="Shared\AutoIt.Windows\Management.cs" />
+    <Compile Include="Shared\AutoIt.Windows\NativeMethods.cs" />
+    <Compile Include="Shared\AutoIt.Controls\SimpleProgressBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\SimpleProgressBar.Designer.cs">
+    <Compile Include="Shared\AutoIt.Controls\SimpleProgressBar.Designer.cs">
       <DependentUpon>SimpleProgressBar.cs</DependentUpon>
     </Compile>
-    <Compile Include="OSD\TaskSequence.cs" />
-    <EmbeddedResource Include="OSD\Background\FormBackground.resx">
+    <Compile Include="Shared\AutoIt.OSD\TaskSequence.cs" />
+    <EmbeddedResource Include="FormBackground.resx">
       <DependentUpon>FormBackground.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -103,10 +103,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Controls\SimpleProgressBar.resx">
+    <EmbeddedResource Include="Shared\AutoIt.Controls\SimpleProgressBar.resx">
       <DependentUpon>SimpleProgressBar.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="OSD\Background\app.manifest" />
+    <None Include="app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -143,7 +143,7 @@
     <None Include="Resources\main.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="OSD\Background\Options.xml">
+    <Content Include="Options.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
