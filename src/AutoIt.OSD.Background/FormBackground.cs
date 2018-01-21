@@ -89,6 +89,51 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
+        ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">String is not a valid bool.</exception>
+        private static bool ConvertStringToBool(string input)
+        {
+            if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
+            {
+                return true;
+            }
+
+            if (input.ToUpper() == "FALSE" || input.ToUpper() == "OFF" || input == "0")
+            {
+                return false;
+            }
+
+            throw new ArgumentException();
+        }
+
+        /// <summary>
+        ///     Returns path of the current user wallpaper.
+        /// </summary>
+        /// <returns></returns>
+        private static string GetCurrentUserWallpaperPath()
+        {
+            string wallpaperPath = string.Empty;
+
+            try
+            {
+                RegistryKey userWallpaper = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
+                if (userWallpaper != null)
+                {
+                    wallpaperPath = userWallpaper.GetValue("Wallpaper").ToString();
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+
+            return wallpaperPath;
+        }
+
+        /// <summary>
         ///     Look for an existing process with this name and terminate it.
         /// </summary>
         private static void KillPreviousInstance()
@@ -124,27 +169,6 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">String is not a valid bool.</exception>
-        private static bool ConvertStringToBool(string input)
-        {
-            if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
-            {
-                return true;
-            }
-
-            if (input.ToUpper() == "FALSE" || input.ToUpper() == "OFF" || input == "0")
-            {
-                return false;
-            }
-
-            throw new ArgumentException();
-        }
-
-        /// <summary>
         ///     Runs when form is starting to close.
         /// </summary>
         /// <param name="sender"></param>
@@ -169,7 +193,6 @@ namespace AutoIt.OSD.Background
             // Read in options file if specified
             if (!GetOptions())
             {
-                MessageBox.Show(@"Unable to read or parse Options.xml file.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return;
@@ -219,32 +242,30 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Returns path of the current user wallpaper.
+        /// Processes command line options and options.xml
         /// </summary>
         /// <returns></returns>
-        private static string GetCurrentUserWallpaperPath()
-        {
-            string wallpaperPath = string.Empty;
-
-            try
-            {
-                RegistryKey userWallpaper = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", false);
-                if (userWallpaper != null)
-                {
-                    wallpaperPath = userWallpaper.GetValue("Wallpaper").ToString();
-                }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            return wallpaperPath;
-        }
-
         private bool GetOptions()
         {
             string[] arguments = Environment.GetCommandLineArgs();
+
+            if (arguments.Length >= 2)
+            {
+                string arg = arguments[1].ToUpper();
+
+                if (arg == "/?" || arg == "?")
+                {
+                    var usage = @"AutoIt.OSD.Background [/Close] | [Options.xml]";
+                    MessageBox.Show(usage, AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+
+                if (arg == "/CLOSE" || arg == "CLOSE")
+                {
+                    KillPreviousInstance();
+                    return false;
+                }
+            }
 
             // If no file specifed use defaults
             if (arguments.Length == 1)
@@ -278,6 +299,7 @@ namespace AutoIt.OSD.Background
             }
             catch (Exception)
             {
+                MessageBox.Show(@"Unable to read or parse Options.xml file.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
@@ -332,6 +354,9 @@ namespace AutoIt.OSD.Background
             return true;
         }
 
+        /// <summary>
+        /// Updates the progress bar based on the position in the task sequence.
+        /// </summary>
         private void RefreshProgressBar()
         {
             if (!_progressBarEnabled)
@@ -393,6 +418,11 @@ namespace AutoIt.OSD.Background
             }
         }
 
+        /// <summary>
+        /// Event to handle display settings changes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
             // Force update of background image in case of resolution change
