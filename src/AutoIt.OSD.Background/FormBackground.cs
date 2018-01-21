@@ -117,8 +117,10 @@ namespace AutoIt.OSD.Background
             // After various tests with modifying Z-order without ever obscuring the foreground what
             // seems to work best is to move our window right to the bottom, then move the Win7/10 progress
             // window to the bottom
+            // We'll also try and hide the Windows screen for good measure
             NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
             NativeMethods.SetWindowPos(progressWindows[0], NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+            NativeMethods.ShowWindowAsync(progressWindows[0], NativeMethods.SW_HIDE);
         }
 
         /// <summary>
@@ -393,8 +395,11 @@ namespace AutoIt.OSD.Background
 
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
-            // Force update of background image
+            // Force update of background image in case of resolution change
             RefreshBackgroundImage(true);
+
+            // Push the Win7/Win10 progress screen to the bottom, then put our screen on top
+            BringToFrontOfWindowsSetupProgress();
         }
 
         /// <summary>
