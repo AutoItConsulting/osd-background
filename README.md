@@ -8,7 +8,7 @@ BGInfo.exe can be run at various stages of a deployment to show computer informa
 ## Issues 
 During Windows 7 setup there is a window that shows the message "Setup is preparing your computer for first use". On Windows 8 and Windows 10 that message is "Getting Ready" or the circling dots animation. These setup windows obscure the background making the BGInfo solution fail.
 
-MDT had a solution for this for Windows 7 in the **ZTISetBackground.wsf** script that used a custom **WindowHide.exe** executable to *hide* the offending window by it's title - which was *FirstUXWnd* - thus revealing the previoulsy hidden background image. On windows 10 the window name changed to *Progress*, but on both Windows 7 and 10 the class name is the same which is *FirstUXWndClass*.
+MDT had a solution for this for Windows 7 in the **ZTISetBackground.wsf** script that used a custom **WindowHide.exe** executable to *hide* the offending window by its title - which was *FirstUXWnd* - thus revealing the previously hidden background image. On windows 10 the window name changed to *Progress*, but on both Windows 7 and 10 the class name is the same which is *FirstUXWndClass*.
 
 Unfortunately, on Windows 10 hiding this window still does not reveal the background. The only solution is to create a new custom window and place it above this progress window and fill it with our wallpaper bitmap thus creating a "fake" background.
 
