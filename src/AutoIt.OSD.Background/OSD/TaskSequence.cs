@@ -7,9 +7,9 @@
 using System;
 using TSEnvironmentLib;
 
-namespace AutoIt.OSD.Background
+namespace AutoIt.OSD
 {
-    internal class TaskSequence
+    public class TaskSequence
     {
         /// <summary>
         ///     If running from a Task Sequence returns the tsVariable,

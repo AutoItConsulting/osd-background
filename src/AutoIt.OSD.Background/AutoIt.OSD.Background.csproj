@@ -7,7 +7,7 @@
     <ProjectGuid>{E764D3F0-CDCB-4773-B00F-A3187C67D447}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AutoIt.OSD.Background</RootNamespace>
+    <RootNamespace>AutoIt</RootNamespace>
     <AssemblyName>AutoIt.OSD.Background</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -50,7 +50,7 @@
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationManifest>OSD\Background\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\main.ico</ApplicationIcon>
@@ -72,23 +72,25 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FormBackground.cs">
+    <Compile Include="OSD\Background\FormBackground.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="FormBackground.Designer.cs">
+    <Compile Include="OSD\Background\FormBackground.Designer.cs">
       <DependentUpon>FormBackground.cs</DependentUpon>
     </Compile>
-    <Compile Include="Options.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="OSD\Background\Options.cs" />
+    <Compile Include="OSD\Background\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SimpleProgressBar.cs">
+    <Compile Include="Windows\Management.cs" />
+    <Compile Include="Windows\NativeMethods.cs" />
+    <Compile Include="Controls\SimpleProgressBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="SimpleProgressBar.Designer.cs">
+    <Compile Include="Controls\SimpleProgressBar.Designer.cs">
       <DependentUpon>SimpleProgressBar.cs</DependentUpon>
     </Compile>
-    <Compile Include="TaskSequence.cs" />
-    <EmbeddedResource Include="FormBackground.resx">
+    <Compile Include="OSD\TaskSequence.cs" />
+    <EmbeddedResource Include="OSD\Background\FormBackground.resx">
       <DependentUpon>FormBackground.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -101,10 +103,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="SimpleProgressBar.resx">
+    <EmbeddedResource Include="Controls\SimpleProgressBar.resx">
       <DependentUpon>SimpleProgressBar.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="app.manifest" />
+    <None Include="OSD\Background\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -141,10 +143,11 @@
     <None Include="Resources\main.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Options.xml">
+    <Content Include="OSD\Background\Options.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

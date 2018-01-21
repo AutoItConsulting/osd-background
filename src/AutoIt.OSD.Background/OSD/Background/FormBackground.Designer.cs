@@ -1,4 +1,6 @@
-﻿namespace AutoIt.OSD.Background
+﻿using AutoIt.Controls;
+
+namespace AutoIt.OSD.Background
 {
     partial class FormBackground
     {
@@ -31,7 +33,7 @@
             this.components = new System.ComponentModel.Container();
             this.pictureBoxBackground = new System.Windows.Forms.PictureBox();
             this.timerRefresh = new System.Windows.Forms.Timer(this.components);
-            this.progressBar = new AutoIt.OSD.Background.SimpleProgressBar();
+            this.progressBar = new SimpleProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBackground)).BeginInit();
             this.SuspendLayout();
             // 

@@ -12,7 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Xml.Serialization;
-using AutoIt.OSD.Background.Properties;
+using AutoIt.Properties;
 using Microsoft.Win32;
 
 namespace AutoIt.OSD.Background
@@ -138,6 +138,12 @@ namespace AutoIt.OSD.Background
                 Close();
                 return;
             }
+
+            // Send to back
+            SendToBack();
+
+            // Make sure picture box is bottom most control
+            pictureBoxBackground.SendToBack();
 
             // First update of background image
             if (RefreshBackgroundImage(true) == false)

@@ -1,4 +1,4 @@
-﻿namespace AutoIt.OSD.Background
+﻿namespace AutoIt.Controls
 {
     partial class SimpleProgressBar
     {
