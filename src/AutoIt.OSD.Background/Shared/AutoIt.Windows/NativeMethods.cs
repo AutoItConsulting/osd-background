@@ -33,7 +33,7 @@ namespace AutoIt.Windows
         [DllImport("user32.dll")]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
-        [DllImport("user32.dll", SetLastError = true)]
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
         [DllImport("user32.dll")]
@@ -59,10 +59,10 @@ namespace AutoIt.Windows
         [DllImport("User32.dll")]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
-        [DllImport("User32.dll")]
+        [DllImport("User32.dll", CharSet = CharSet.Unicode)]
         public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
 
-        [DllImport("User32.Dll")]
+        [DllImport("User32.Dll", CharSet = CharSet.Unicode)]
         public static extern void GetClassName(IntPtr hWnd, StringBuilder s, int nMaxCount);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
