@@ -8,6 +8,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
+// ReSharper disable once CheckNamespace
 namespace AutoIt.Controls
 {
     public partial class SimpleProgressBar : UserControl

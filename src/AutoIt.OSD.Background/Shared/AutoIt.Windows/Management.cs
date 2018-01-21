@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-
+// ReSharper disable once CheckNamespace
 namespace AutoIt.Windows
 {
     public class Management
     {
         public static IEnumerable<IntPtr> FindWindows(NativeMethods.EnumWindowsProc filter)
         {
-            IntPtr found = IntPtr.Zero;
             var windows = new List<IntPtr>();
 
             NativeMethods.EnumWindows(
@@ -56,14 +55,15 @@ namespace AutoIt.Windows
         public static string GetWindowText(IntPtr hWnd)
         {
             int size = NativeMethods.GetWindowTextLength(hWnd);
-            if (size > 0)
+            if (size <= 0)
             {
-                var builder = new StringBuilder(size + 1);
-                NativeMethods.GetWindowText(hWnd, builder, builder.Capacity);
-                return builder.ToString();
+                return string.Empty;
             }
 
-            return string.Empty;
+            var builder = new StringBuilder(size + 1);
+            NativeMethods.GetWindowText(hWnd, builder, builder.Capacity);
+            return builder.ToString();
+
         }
     }
 }

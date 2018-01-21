@@ -7,6 +7,7 @@
 using System;
 using TSEnvironmentLib;
 
+// ReSharper disable once CheckNamespace
 namespace AutoIt.OSD
 {
     public class TaskSequence

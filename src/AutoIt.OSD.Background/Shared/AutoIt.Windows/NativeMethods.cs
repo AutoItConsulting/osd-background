@@ -30,7 +30,6 @@ namespace AutoIt.Windows
         public const int SW_RESTORE = 9;
         public const int SW_SHOWDEFAULT = 10;
 
-
         [DllImport("user32.dll")]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
@@ -58,10 +57,10 @@ namespace AutoIt.Windows
         public static extern IntPtr GetNextWindow(IntPtr hWnd, uint wCmd);
 
         [DllImport("User32.dll")]
-        public static extern Int32 SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         [DllImport("User32.dll")]
-        public static extern Int32 SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
 
         [DllImport("User32.Dll")]
         public static extern void GetClassName(IntPtr hWnd, StringBuilder s, int nMaxCount);
@@ -71,6 +70,5 @@ namespace AutoIt.Windows
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         public static extern int GetWindowTextLength(IntPtr hWnd);
-
     }
 }

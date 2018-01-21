@@ -50,6 +50,17 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
+        ///     We don't want this window to activate when it is shown
+        /// </summary>
+        protected override bool ShowWithoutActivation
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
         ///     Check if this is Windows 8 or later. Requires an OS manifest to work correctly.
         /// </summary>
         /// <returns></returns>
@@ -91,7 +102,7 @@ namespace AutoIt.OSD.Background
 
         private void BringToFrontOfWindowsSetupProgress()
         {
-            // Find the window(s) (should only be one) with the FirstUXWndClass
+            // Find the window(s) (should only be one) with the FirstUXWndClass, same on Win7/Win10
             List<IntPtr> progressWindows = Management.FindWindowsWithClass("FirstUXWndClass").ToList();
 
             const uint flag = NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE;
@@ -103,15 +114,11 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
-            // Set z order so that our window is just above the windows setup one
-            //uint flag = AutoIt.Windows.NativeMethods.SWP_NOMOVE | AutoIt.Windows.NativeMethods.SWP_NOSIZE;
-            //MessageBox.Show(AutoIt.Windows.Management.GetWindowText(progressWindow));    
-            //AutoIt.Windows.NativeMethods.SetWindowPos(Handle, progressWindow, 0, 0, 0, 0, flag);
-            NativeMethods.SetWindowPos(progressWindows[0], Handle, 0, 0, 0, 0, flag);
-
-            //AutoIt.Windows.NativeMethods.SetWindowPos(Handle, AutoIt.Windows.NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
-            //AutoIt.Windows.NativeMethods.ShowWindow(progressWindow, AutoIt.Windows.NativeMethods.SW_SHOWNORMAL);
-            //AutoIt.Windows.NativeMethods.SetParent(Handle, progressWindow);
+            // After various tests with modifying Z-order without ever obscuring the foreground what
+            // seems to work best is to move our window right to the bottom, then move the Win7/10 progress
+            // window to the bottom
+            NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+            NativeMethods.SetWindowPos(progressWindows[0], NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
         }
 
         /// <summary>
@@ -120,7 +127,7 @@ namespace AutoIt.OSD.Background
         /// <param name="input"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException">String is not a valid bool.</exception>
-        private bool ConvertStringToBool(string input)
+        private static bool ConvertStringToBool(string input)
         {
             if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
             {
@@ -160,14 +167,11 @@ namespace AutoIt.OSD.Background
             // Read in options file if specified
             if (!GetOptions())
             {
-                MessageBox.Show("Unable to read or parse Options.xml file.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(@"Unable to read or parse Options.xml file.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return;
             }
-
-            // Send to back
-            //SendToBack();
 
             // Make sure picture box is bottom most control on our form
             pictureBoxBackground.SendToBack();
@@ -183,6 +187,9 @@ namespace AutoIt.OSD.Background
 
             // First update of progress bar
             RefreshProgressBar();
+
+            // Push the Win7/Win10 progress screen to the bottom, then put our screen on top
+            BringToFrontOfWindowsSetupProgress();
 
             // Trap shutdown
             SystemEvents.SessionEnding += SystemEvents_SessionEnding;
@@ -201,10 +208,8 @@ namespace AutoIt.OSD.Background
             // Let form finish showing
             Refresh();
 
-            // We don't want any other versions running
+            // We don't want any other versions running - kill it after we have completely shown our new screen to reduce flicker
             KillPreviousInstance();
-
-            BringToFrontOfWindowsSetupProgress();
 
             // Start the refresh timer
             timerRefresh.Interval = (int)TimeSpan.FromSeconds(RefreshInervalSecs).TotalMilliseconds;
@@ -215,7 +220,7 @@ namespace AutoIt.OSD.Background
         ///     Returns path of the current user wallpaper.
         /// </summary>
         /// <returns></returns>
-        private string GetCurrentUserWallpaperPath()
+        private static string GetCurrentUserWallpaperPath()
         {
             string wallpaperPath = string.Empty;
 
