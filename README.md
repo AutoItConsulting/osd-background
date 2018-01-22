@@ -37,7 +37,7 @@ I've decided to stay with the BGInfo + Custom exe style of usage as BGInfo is in
 
 The basic usage is:
 
-* Edit *Options.xml* customise
+* Edit *Options.xml* to customise as required
 
 ````
 <Options>
@@ -69,3 +69,28 @@ The basic usage is:
 ````
 
 * Remember to rerun the command after each Restart Computer step in the task sequence to reshow the background.
+
+## Windows 10 Additional Requirements
+
+On the latest versions of Windows 10 you must also use a custom unattend.xml file with the **SkipMachineOOBE** and **SkipUserOOBE** options set to **true** otherwise there seems to be a block on any windows being shown at all - even the SCCM progress bars are invisible. The example below is for the x64 version of Windows 10.
+
+````
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideLocalAccountScreen>true</HideLocalAccountScreen>
+                <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <ProtectYourPC>1</ProtectYourPC>
+                <SkipMachineOOBE>true</SkipMachineOOBE>
+                <SkipUserOOBE>true</SkipUserOOBE>
+            </OOBE>
+        </component>
+    </settings>
+</unattend>
+
+```` 
