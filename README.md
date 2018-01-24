@@ -1,4 +1,4 @@
-# AutoIt OSD Background
+# OSD Background
 
 ## Background
 
