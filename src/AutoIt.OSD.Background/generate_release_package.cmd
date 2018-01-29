@@ -15,7 +15,7 @@ if exist "%SIGNTOOL%" goto OK1
     echo Location is of the form "C:\Program Files (x86)\Windows Kits\8.1\x86\bin\signtool.exe"
 :OK1
 
-"%SIGNTOOL%" sign /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 /n "AutoIt Consulting Ltd" /d "desc" /du "website" /q "%ScriptDir%\AutoIt.OSD.Background.exe"
+"%SIGNTOOL%" sign /a /fs SHA256 /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 /n "AutoIt Consulting Ltd" /d "desc" /du "website" /q "%ScriptDir%\AutoIt.OSD.Background.exe"
 
 
 REM Clean up
