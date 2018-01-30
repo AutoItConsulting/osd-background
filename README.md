@@ -5,7 +5,7 @@
 
 ## Overview
 
-Please see the product page for more details and binary downloads. [https://www.autoitconsulting.com/software/osd-background/](https://www.autoitconsulting.com/software/osd-background/).
+Please see the product page for more details and binary downloads. [https://www.autoitconsulting.com/site/software/osd-background/](https://www.autoitconsulting.com/site/software/osd-background/).
 
 When doing an SCCM or MDT Operating System Deployment a common task is to customize the background that is shown during the various stages of the build in order to brand the build or to just indicate the main build tasks.
 
