@@ -6,7 +6,7 @@
   <Title>OSD Tools Menu</Title>
 
   <!-- Password to allow access to the tools window, leave blank for none -->
-  <Password><![CDATA[]]></Password>
+  <Password><![CDATA[Pass]]></Password>
 
   <!-- Show progress bar for current task sequence progress -->
   <ProgressBarEnabled>true</ProgressBarEnabled>

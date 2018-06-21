@@ -44,5 +44,13 @@ namespace AutoIt.OSD.Background
                 DialogResult = DialogResult.Cancel;
             }
         }
+
+        private void FormPassword_Load(object sender, EventArgs e)
+        {
+            textBoxPassword.Select();
+
+            // Get tools window close to the top so that user can see it
+            BringToFront();
+        }
     }
 }

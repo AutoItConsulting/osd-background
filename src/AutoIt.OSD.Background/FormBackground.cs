@@ -329,6 +329,9 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
+            // Hide the background window because it causes issues when the user clicks on it
+            Hide();
+
             // Ask for password if needed
             var result = DialogResult.OK;
             if (!string.IsNullOrEmpty(_xmlOptions.Password))
@@ -342,20 +345,19 @@ namespace AutoIt.OSD.Background
             // If password is ok, launch the tools
             if (result == DialogResult.OK)
             {
-                // Hide the background window because it causes issues when the user clicks on it
-                Hide();
+                
 
                 using (_formTools = new FormTools(_xmlOptions))
                 {
-                    _formTools.ShowDialog(this);
+                    _formTools.ShowDialog();
                 }
-
-                // Reshow the background and push it to the back again
-                Show();
-                BringToFrontOfWindowsSetupProgress();
 
                 _formTools = null;
             }
+
+            // Reshow the background and push it to the back again
+            Show();
+            BringToFrontOfWindowsSetupProgress();
         }
 
         /// <summary>

@@ -54,6 +54,9 @@ namespace AutoIt.OSD.Background
             // Select first tab
             tabControl.SelectTab("tabUserTools");
             AcceptButton = buttonUserToolRun;
+
+            // Get tools window close to the top so that user can see it
+            BringToFront();
         }
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
@@ -85,11 +88,19 @@ namespace AutoIt.OSD.Background
             {
                 UseShellExecute = false,
                 FileName = program,
-                Arguments = arguments,
-                WorkingDirectory = workingDirectory,
+               
                 
             };
 
+            if (!string.IsNullOrEmpty(arguments))
+            {
+                startInfo.Arguments = arguments;
+            }
+
+            if (!string.IsNullOrEmpty(workingDirectory))
+            {
+                startInfo.WorkingDirectory = workingDirectory;
+            }
 
             using (Process.Start(startInfo))
             {
