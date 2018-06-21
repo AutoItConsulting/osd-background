@@ -35,6 +35,8 @@ namespace AutoIt.OSD.Background
         private int _progressBarHeight;
         private int _progressBarOffset;
 
+        private bool _startedInTaskSequence;
+
         private DateTime _wallpaperLastModified;
 
         private string _wallpaperPath = string.Empty;
@@ -233,6 +235,9 @@ namespace AutoIt.OSD.Background
             // Register a global keyboard hook to bring up the tools menu
             _keyboardHook.KeyPressed += KeyboardHook_OnPressed;
             _keyboardHook.RegisterHotKey(Background.ModifierKeys.Control | Background.ModifierKeys.Alt, Keys.F12);
+
+            // By default assume not in a task sequence
+            _startedInTaskSequence = false;
         }
 
         /// <summary>
@@ -371,16 +376,19 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
+            // Get position in task sequence if there is one
+            int currentInstruction;
+            int lastInstruction;
+
             try
             {
 #if DEBUG
-                var currentInstruction = 50;
-                var lastInstruction = 100;
+                currentInstruction = 50;
+                lastInstruction = 100;
 #else
-
-// Get the current position in the task sequence
-                int currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
-                int lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
+                // Get the current position in the task sequence
+                currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
+                lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
 #endif
 
                 if (currentInstruction > lastInstruction)
@@ -388,14 +396,29 @@ namespace AutoIt.OSD.Background
                     currentInstruction = lastInstruction;
                 }
 
-                // Set percentage and make visible
-                progressBar.Value = 100 * currentInstruction / lastInstruction;
-                progressBar.Visible = true;
+                throw new InvalidOperationException();
             }
             catch (Exception)
             {
+                // Error reading task sequence variables, remove progress bar
                 progressBar.Visible = false;
+
+                // Have we been running in a task sequence before? If so, assume that the task sequence has ended
+                // and close down - this prevents situations where the caller forgets to close us at the end of a TS
+                if (_startedInTaskSequence)
+                {
+                    Close();
+                }
+
+                return;
             }
+
+            // If we reached here, we are in a task sequence, update flag
+            _startedInTaskSequence = true;
+
+            // Set percentage and make visible
+            progressBar.Value = 100 * currentInstruction / lastInstruction;
+            progressBar.Visible = true;
         }
 
         /// <summary>
