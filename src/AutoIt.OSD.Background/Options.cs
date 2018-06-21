@@ -4,6 +4,7 @@
 // using System;
 //
 
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace AutoIt.OSD.Background
@@ -11,6 +12,12 @@ namespace AutoIt.OSD.Background
     [XmlRoot("Options")]
     public class Options
     {
+        [XmlElement("Title")]
+        public string Title;
+
+        [XmlElement("Password")]
+        public string Password;
+        
         [XmlElement("ProgressBarEnabled")]
         public string ProgressBarEnabled;
 
@@ -28,5 +35,25 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("ProgressBarHeight")]
         public int ProgressBarHeight;
+
+        [XmlArray("UserTools")]
+        [XmlArrayItem("UserTool")]
+        public List<UserTool> UserTools = new List<UserTool>();
+
+    }
+
+    public class UserTool
+    {
+        [XmlElement("Name")]
+        public string Name { get; set; }
+
+        [XmlElement("Program")]
+        public string Program { get; set; }
+
+        [XmlElement("Arguments")]
+        public string Arguments { get; set; }
+
+        [XmlElement("WorkingDirectory")]
+        public string WorkingDirectory { get; set; }
     }
 }

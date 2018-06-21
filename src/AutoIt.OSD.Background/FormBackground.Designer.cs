@@ -17,6 +17,7 @@ namespace AutoIt.OSD.Background
         {
             if (disposing && (components != null))
             {
+                _keyboardHook.Dispose();
                 components.Dispose();
             }
             base.Dispose(disposing);
@@ -33,7 +34,7 @@ namespace AutoIt.OSD.Background
             this.components = new System.ComponentModel.Container();
             this.pictureBoxBackground = new System.Windows.Forms.PictureBox();
             this.timerRefresh = new System.Windows.Forms.Timer(this.components);
-            this.progressBar = new SimpleProgressBar();
+            this.progressBar = new AutoIt.Controls.SimpleProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBackground)).BeginInit();
             this.SuspendLayout();
             // 
@@ -81,6 +82,7 @@ namespace AutoIt.OSD.Background
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "OSD Branding";
+            this.Activated += new System.EventHandler(this.FormBackground_Activated);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormBackground_FormClosing);
             this.Load += new System.EventHandler(this.FormBackground_Load);
             this.Shown += new System.EventHandler(this.FormBackground_Shown);

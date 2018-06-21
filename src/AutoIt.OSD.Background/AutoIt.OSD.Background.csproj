@@ -78,6 +78,19 @@
     <Compile Include="FormBackground.Designer.cs">
       <DependentUpon>FormBackground.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormPassword.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPassword.Designer.cs">
+      <DependentUpon>FormPassword.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormTools.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTools.Designer.cs">
+      <DependentUpon>FormTools.cs</DependentUpon>
+    </Compile>
+    <Compile Include="KeyboardHook.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -92,6 +105,12 @@
     <Compile Include="Shared\AutoIt.OSD\TaskSequence.cs" />
     <EmbeddedResource Include="FormBackground.resx">
       <DependentUpon>FormBackground.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormPassword.resx">
+      <DependentUpon>FormPassword.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormTools.resx">
+      <DependentUpon>FormTools.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -23,6 +23,10 @@ namespace AutoIt.OSD.Background
     {
         private const int RefreshInervalSecs = 1;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
+
+        private Form _formTools;
+
+        private KeyboardHook _keyboardHook = new KeyboardHook();
         private Color _progressBarBackColor;
 
         private DockStyle _progressBarDock;
@@ -44,7 +48,7 @@ namespace AutoIt.OSD.Background
             // Set main icon
             Icon = Resources.main;
 
-            // Set these here rather than designer as it make it easier to work with designer
+            // Set these here rather than designer as it makes it easier to work with designer
             pictureBoxBackground.Dock = DockStyle.Fill;
             pictureBoxBackground.SizeMode = PictureBoxSizeMode.StretchImage;
         }
@@ -52,13 +56,7 @@ namespace AutoIt.OSD.Background
         /// <summary>
         ///     We don't want this window to activate when it is shown
         /// </summary>
-        protected override bool ShowWithoutActivation
-        {
-            get
-            {
-                return true;
-            }
-        }
+        protected override bool ShowWithoutActivation => true;
 
         /// <summary>
         ///     Check if this is Windows 8 or later. Requires an OS manifest to work correctly.
@@ -150,12 +148,12 @@ namespace AutoIt.OSD.Background
             // Find the window(s) (should only be one) with the FirstUXWndClass, same on Win7/Win10
             List<IntPtr> progressWindows = Management.FindWindowsWithClass("FirstUXWndClass").ToList();
 
-            const uint flag = NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE;
+            const uint flag = Windows.NativeMethods.SWP_NOACTIVATE | Windows.NativeMethods.SWP_NOMOVE | Windows.NativeMethods.SWP_NOSIZE;
 
             // If there are no progress windows then just move to bottom most
             if (progressWindows.Count == 0)
             {
-                NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+                Windows.NativeMethods.SetWindowPos(Handle, Windows.NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
                 return;
             }
 
@@ -163,9 +161,15 @@ namespace AutoIt.OSD.Background
             // seems to work best is to move our window right to the bottom, then move the Win7/10 progress
             // window to the bottom
             // We'll also try and hide the Windows screen for good measure
-            NativeMethods.SetWindowPos(Handle, NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
-            NativeMethods.SetWindowPos(progressWindows[0], NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
-            NativeMethods.ShowWindowAsync(progressWindows[0], NativeMethods.SW_HIDE);
+            Windows.NativeMethods.SetWindowPos(Handle, Windows.NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+            Windows.NativeMethods.SetWindowPos(progressWindows[0], Windows.NativeMethods.HWND_BOTTOM, 0, 0, 0, 0, flag);
+            Windows.NativeMethods.ShowWindowAsync(progressWindows[0], Windows.NativeMethods.SW_HIDE);
+        }
+
+        private void FormBackground_Activated(object sender, EventArgs e)
+        {
+            //MessageBox.Show("Activated");
+            //BringToFrontOfWindowsSetupProgress();
         }
 
         /// <summary>
@@ -179,6 +183,9 @@ namespace AutoIt.OSD.Background
 
             // Remove static events
             SystemEvents.SessionEnding -= SystemEvents_SessionEnding;
+
+            // Dispose keyboard hook
+            _keyboardHook.Dispose();
         }
 
         /// <summary>
@@ -211,7 +218,8 @@ namespace AutoIt.OSD.Background
             }
 
             // First update of progress bar
-            RefreshProgressBar();
+            ProgressBarResize();
+            ProgressBarRefresh();
 
             // Push the Win7/Win10 progress screen to the bottom, then put our screen on top
             BringToFrontOfWindowsSetupProgress();
@@ -221,6 +229,10 @@ namespace AutoIt.OSD.Background
 
             // Trap display change
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+
+            // Register a global keyboard hook to bring up the tools menu
+            _keyboardHook.KeyPressed += KeyboardHook_OnPressed;
+            _keyboardHook.RegisterHotKey(Background.ModifierKeys.Control | Background.ModifierKeys.Alt, Keys.F12);
         }
 
         /// <summary>
@@ -242,12 +254,13 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        /// Processes command line options and options.xml
+        ///     Processes command line options and options.xml
         /// </summary>
         /// <returns></returns>
         private bool GetOptions()
         {
             string[] arguments = Environment.GetCommandLineArgs();
+            string optionsFilename = string.Empty;
 
             if (arguments.Length >= 2)
             {
@@ -265,24 +278,21 @@ namespace AutoIt.OSD.Background
                     KillPreviousInstance();
                     return false;
                 }
+
+                // Get the options filename
+                optionsFilename = arguments[1];
             }
 
-            // If no file specifed use defaults
+            // If no filename specified, use options.xml in current folder
             if (arguments.Length == 1)
             {
-                _progressBarDock = DockStyle.Bottom;
-                _progressBarEnabled = true;
-                _progressBarOffset = 0;
-                _progressBarHeight = 5;
-                _progressBarForeColor = progressBar.ForeColor;
-                _progressBarBackColor = progressBar.BackColor;
-                return true;
+                optionsFilename = _appPath + @"\Options.xml";
             }
 
             try
             {
                 var deSerializer = new XmlSerializer(typeof(Options));
-                TextReader reader = new StreamReader(_appPath + @"\" + arguments[1]);
+                TextReader reader = new StreamReader(optionsFilename);
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
                 _progressBarEnabled = ConvertStringToBool(_xmlOptions.ProgressBarEnabled);
@@ -304,6 +314,126 @@ namespace AutoIt.OSD.Background
             }
 
             return true;
+        }
+
+        /// <summary>
+        ///     Runs when our global keyboard hook is triggered.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void KeyboardHook_OnPressed(object sender, KeyPressedEventArgs e)
+        {
+            // Ignore if already showing the tools form
+            if (_formTools != null)
+            {
+                return;
+            }
+
+            // Ask for password if needed
+            var result = DialogResult.OK;
+            if (!string.IsNullOrEmpty(_xmlOptions.Password))
+            {
+                using (Form formPassword = new FormPassword(_xmlOptions))
+                {
+                    result = formPassword.ShowDialog();
+                }
+            }
+
+            // If password is ok, launch the tools
+            if (result == DialogResult.OK)
+            {
+                // Hide the background window because it causes issues when the user clicks on it
+                Hide();
+
+                using (_formTools = new FormTools(_xmlOptions))
+                {
+                    _formTools.ShowDialog(this);
+                }
+
+                // Reshow the background and push it to the back again
+                Show();
+                BringToFrontOfWindowsSetupProgress();
+
+                _formTools = null;
+            }
+        }
+
+        /// <summary>
+        ///     Updates the progress bar based on the position in the task sequence.
+        /// </summary>
+        private void ProgressBarRefresh()
+        {
+            if (!_progressBarEnabled)
+            {
+                progressBar.Visible = false;
+                return;
+            }
+
+            try
+            {
+#if DEBUG
+                var currentInstruction = 50;
+                var lastInstruction = 100;
+#else
+
+// Get the current position in the task sequence
+                int currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
+                int lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
+#endif
+
+                if (currentInstruction > lastInstruction)
+                {
+                    currentInstruction = lastInstruction;
+                }
+
+                // Set percentage and make visible
+                progressBar.Value = 100 * currentInstruction / lastInstruction;
+                progressBar.Visible = true;
+            }
+            catch (Exception)
+            {
+                progressBar.Visible = false;
+            }
+        }
+
+        /// <summary>
+        ///     Updates the progress bar based on the screen size.
+        /// </summary>
+        private void ProgressBarResize()
+        {
+            if (!_progressBarEnabled)
+            {
+                return;
+            }
+
+            // Format to client size
+            progressBar.Left = ClientRectangle.Left;
+            progressBar.Width = ClientSize.Width;
+            progressBar.Height = _progressBarHeight;
+
+            if (_progressBarDock == DockStyle.Bottom)
+            {
+                progressBar.Top = ClientSize.Height - _progressBarHeight - _progressBarOffset;
+            }
+            else if (_progressBarDock == DockStyle.Top)
+            {
+                progressBar.Top = _progressBarOffset;
+            }
+
+            if (progressBar.Top < ClientRectangle.Top)
+            {
+                progressBar.Top = ClientRectangle.Top;
+            }
+            else if (progressBar.Top > ClientRectangle.Bottom)
+            {
+                progressBar.Top = ClientRectangle.Bottom;
+            }
+
+            progressBar.ForeColor = _progressBarForeColor;
+            progressBar.BackColor = _progressBarBackColor;
+
+            // Ensure in front of picture box
+            progressBar.BringToFront();
         }
 
         /// <summary>
@@ -336,7 +466,10 @@ namespace AutoIt.OSD.Background
             // Set the form bitmap and force display to primary monitor
             StartPosition = FormStartPosition.Manual;
             Location = Screen.PrimaryScreen.Bounds.Location;
-            WindowState = FormWindowState.Maximized;
+            
+            // Don't use Maximized as it goes over the task bar which can be ugly
+            //WindowState = FormWindowState.Maximized;
+            Size = new Size(Screen.GetWorkingArea(this).Width, Screen.GetWorkingArea(this).Height);
 
             try
             {
@@ -355,71 +488,7 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        /// Updates the progress bar based on the position in the task sequence.
-        /// </summary>
-        private void RefreshProgressBar()
-        {
-            if (!_progressBarEnabled)
-            {
-                progressBar.Visible = false;
-                return;
-            }
-
-            try
-            {
-#if DEBUG
-                var currentInstruction = 50;
-                var lastInstruction = 100;
-#else
-                int currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
-                int lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
-#endif
-
-                if (currentInstruction > lastInstruction)
-                {
-                    currentInstruction = lastInstruction;
-                }
-
-                // Format to client size
-                progressBar.Left = ClientRectangle.Left;
-                progressBar.Width = ClientSize.Width;
-                progressBar.Height = _progressBarHeight;
-
-                if (_progressBarDock == DockStyle.Bottom)
-                {
-                    progressBar.Top = ClientSize.Height - _progressBarHeight - _progressBarOffset;
-                }
-                else if (_progressBarDock == DockStyle.Top)
-                {
-                    progressBar.Top = _progressBarOffset;
-                }
-
-                if (progressBar.Top < ClientRectangle.Top)
-                {
-                    progressBar.Top = ClientRectangle.Top;
-                }
-                else if (progressBar.Top > ClientRectangle.Bottom)
-                {
-                    progressBar.Top = ClientRectangle.Bottom;
-                }
-
-                // Set percentage and make visible
-                progressBar.ForeColor = _progressBarForeColor;
-                progressBar.BackColor = _progressBarBackColor;
-                progressBar.Value = 100 * currentInstruction / lastInstruction;
-                progressBar.Visible = true;
-
-                // Ensure in front of picture box
-                progressBar.BringToFront();
-            }
-            catch (Exception)
-            {
-                progressBar.Visible = false;
-            }
-        }
-
-        /// <summary>
-        /// Event to handle display settings changes.
+        ///     Event to handle display settings changes.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -430,6 +499,9 @@ namespace AutoIt.OSD.Background
 
             // Push the Win7/Win10 progress screen to the bottom, then put our screen on top
             BringToFrontOfWindowsSetupProgress();
+
+            // Resize progress bar
+            ProgressBarResize();
         }
 
         /// <summary>
@@ -443,7 +515,7 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Called on internal to update bitmap and variables.
+        ///     Called on interval to update bitmap and variables.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -456,7 +528,7 @@ namespace AutoIt.OSD.Background
             RefreshBackgroundImage();
 
             // Update overall progress bar
-            RefreshProgressBar();
+            ProgressBarRefresh();
 
             // Restart timer
             timerRefresh.Start();

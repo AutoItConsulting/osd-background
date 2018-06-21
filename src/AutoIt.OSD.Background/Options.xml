@@ -2,6 +2,12 @@
 
 <Options>
 
+  <!-- Title of the tools window -->
+  <Title>OSD Tools Menu</Title>
+
+  <!-- Password to allow access to the tools window, leave blank for none -->
+  <Password><![CDATA[]]></Password>
+
   <!-- Show progress bar for current task sequence progress -->
   <ProgressBarEnabled>true</ProgressBarEnabled>
 
@@ -16,6 +22,23 @@
   <ProgressBarOffset>0</ProgressBarOffset>
   
   <!-- Height of the progress bar -->
-  <ProgressBarHeight>5</ProgressBarHeight>
+  <ProgressBarHeight>8</ProgressBarHeight>
+
+  <!-- List of tools -->
+  <!-- Can use environment variables in CommandLine and WorkingDirectory -->
+  <UserTools>
+    <UserTool>
+      <Name>Command Prompt</Name>
+      <Program>cmd.exe</Program>
+      <Arguments></Arguments>
+      <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
+    </UserTool>
+    <UserTool>
+      <Name>Registry Editor</Name>
+      <Program>regedit.exe</Program>
+      <Arguments></Arguments>
+      <WorkingDirectory></WorkingDirectory>
+    </UserTool>
+  </UserTools>
 
 </Options>
