@@ -395,8 +395,6 @@ namespace AutoIt.OSD.Background
                 {
                     currentInstruction = lastInstruction;
                 }
-
-                throw new InvalidOperationException();
             }
             catch (Exception)
             {
