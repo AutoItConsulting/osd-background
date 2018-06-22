@@ -5,12 +5,6 @@
 //
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using AutoIt.OSD.Background.Properties;
 
@@ -25,12 +19,6 @@ namespace AutoIt.OSD.Background
             _xmlOptions = xmlOptions;
 
             InitializeComponent();
-
-            // Set title
-            Text = xmlOptions.Title;
-
-            // Set main icon
-            Icon = Resources.main;
         }
 
         private void buttonPasswordOK_Click(object sender, EventArgs e)
@@ -49,6 +37,11 @@ namespace AutoIt.OSD.Background
 
         private void FormPassword_Load(object sender, EventArgs e)
         {
+            // Set title
+            Text = _xmlOptions.Title;
+
+            // Set main icon
+            Icon = Resources.main;
         }
 
         private void FormPassword_Shown(object sender, EventArgs e)

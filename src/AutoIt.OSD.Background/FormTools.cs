@@ -5,76 +5,31 @@
 //
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Windows.Forms;
 using AutoIt.OSD.Background.Properties;
 
 namespace AutoIt.OSD.Background
 {
-    public sealed partial class FormTools : Form
+    public partial class FormTools : Form
     {
-        private List<string>_userTools = new List<string>();
-        private Options _xmlOptions;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
+        private Options _xmlOptions;
 
         public FormTools(Options xmlOptions)
         {
             _xmlOptions = xmlOptions;
 
             InitializeComponent();
-
-            // Set title
-            Text = xmlOptions.Title;
-
-            // Set main icon
-            Icon = Resources.main;
-
-            listBoxUserTools.DataSource = _xmlOptions.UserTools;
-            listBoxUserTools.DisplayMember = "Name";
-        }
-
-        private void tabControl_Selecting(object sender, TabControlCancelEventArgs e)
-        {
-            // Don't allow selection if the tab is disabled
-            e.Cancel = !e.TabPage.Enabled;
-        }
-
-        private void FormTools_Load(object sender, EventArgs e)
-        {
-            listBoxUserTools.Select();
-
-            // Select first tab
-            tabControl.SelectTab("tabUserTools");
-            AcceptButton = buttonUserToolRun;
-
-            // Get tools window close to the top so that user can see it
-            BringToFront();
-        }
-
-        private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (tabControl.SelectedTab == tabControl.TabPages["tabUserTools"])
-            {
-                AcceptButton = buttonUserToolRun;
-            }
-            else 
-            {
-                AcceptButton = null;
-            }
         }
 
         private void buttonUserToolRun_Click(object sender, EventArgs e)
         {
             var userTool = (UserTool)listBoxUserTools.SelectedItem;
-            
+
             // Set environment variable so user tools can reference this path
             Environment.SetEnvironmentVariable("OSDBackgoundExeDir", _appPath);
 
@@ -87,7 +42,7 @@ namespace AutoIt.OSD.Background
             var startInfo = new ProcessStartInfo
             {
                 UseShellExecute = false,
-                FileName = program,
+                FileName = program
             };
 
             // Arguments and WorkingDirectory may be blank, so set as required
@@ -114,7 +69,7 @@ namespace AutoIt.OSD.Background
             catch (Win32Exception exception)
             {
                 // Check for elevation error
-                if ( (uint)exception.ErrorCode != 0x80004005)
+                if ((uint)exception.ErrorCode != 0x80004005)
                 {
                     MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
@@ -140,18 +95,56 @@ namespace AutoIt.OSD.Background
             catch (Exception exception)
             {
                 MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
             }
+        }
+
+        private void FormTools_Load(object sender, EventArgs e)
+        {
+            // Set title
+            Text = _xmlOptions.Title;
+
+            // Set main icon
+            Icon = Resources.main;
+
+            listBoxUserTools.DataSource = _xmlOptions.UserTools;
+            listBoxUserTools.DisplayMember = "Name";
+
+            listBoxUserTools.Select();
+
+            // Select first tab
+            tabControl.SelectTab("tabUserTools");
+            AcceptButton = buttonUserToolRun;
+
+            // Get tools window close to the top so that user can see it
+            BringToFront();
         }
 
         private void listBoxUserTools_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            int index = this.listBoxUserTools.IndexFromPoint(e.Location);
-            if (index != System.Windows.Forms.ListBox.NoMatches)
+            int index = listBoxUserTools.IndexFromPoint(e.Location);
+            if (index != ListBox.NoMatches)
             {
                 // Clicked on an item, use the button click handler
                 buttonUserToolRun_Click(sender, e);
             }
+        }
+
+        private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl.SelectedTab == tabControl.TabPages["tabUserTools"])
+            {
+                AcceptButton = buttonUserToolRun;
+            }
+            else
+            {
+                AcceptButton = null;
+            }
+        }
+
+        private void tabControl_Selecting(object sender, TabControlCancelEventArgs e)
+        {
+            // Don't allow selection if the tab is disabled
+            e.Cancel = !e.TabPage.Enabled;
         }
     }
 }
