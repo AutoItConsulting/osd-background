@@ -29,7 +29,7 @@ namespace AutoIt.OSD.Background
             }
             else
             {
-                MessageBox.Show("Invalid password.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.InvalidPassword, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 DialogResult = DialogResult.None;
                 textBoxPassword.Clear();
             }

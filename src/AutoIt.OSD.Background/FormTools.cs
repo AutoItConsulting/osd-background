@@ -71,13 +71,13 @@ namespace AutoIt.OSD.Background
                 // Check for elevation error
                 if ((uint)exception.ErrorCode != 0x80004005)
                 {
-                    MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(Resources.ErrorLaunchingTool + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
             catch (Exception exception)
             {
-                MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.ErrorLaunchingTool + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -94,7 +94,7 @@ namespace AutoIt.OSD.Background
             }
             catch (Exception exception)
             {
-                MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.ErrorLaunchingTool + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
