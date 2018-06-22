@@ -41,11 +41,17 @@ namespace AutoIt.OSD.Background
             }
             else
             {
-                DialogResult = DialogResult.Cancel;
+                MessageBox.Show("Invalid password.", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult = DialogResult.None;
+                textBoxPassword.Clear();
             }
         }
 
         private void FormPassword_Load(object sender, EventArgs e)
+        {
+        }
+
+        private void FormPassword_Shown(object sender, EventArgs e)
         {
             textBoxPassword.Select();
 

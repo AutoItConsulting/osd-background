@@ -88,10 +88,9 @@ namespace AutoIt.OSD.Background
             {
                 UseShellExecute = false,
                 FileName = program,
-               
-                
             };
 
+            // Arguments and WorkingDirectory may be blank, so set as required
             if (!string.IsNullOrEmpty(arguments))
             {
                 startInfo.Arguments = arguments;
@@ -102,13 +101,47 @@ namespace AutoIt.OSD.Background
                 startInfo.WorkingDirectory = workingDirectory;
             }
 
-            using (Process.Start(startInfo))
+            try
             {
+                // Start process and dipose
+                using (Process.Start(startInfo))
+                {
+                }
+
+                // Finished 
+                return;
+            }
+            catch (Win32Exception exception)
+            {
+                // Check for elevation error
+                if ( (uint)exception.ErrorCode != 0x80004005)
+                {
+                    MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
 
-            //MessageBox.Show("Running: " + ((UserTool)listBoxUserTools.SelectedItem).Name);
-            //MessageBox.Show("Running: " + program);
-            //MessageBox.Show("Running: " + workingDirectory);
+            // Retry and elevate (working directory won't be valid now though)
+            try
+            {
+                startInfo.UseShellExecute = true;
+                startInfo.Verb = "runas";
+
+                // Start process and dipose
+                using (Process.Start(startInfo))
+                {
+                }
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show("Error launching tool.\r\n\r\nException text:\n" + exception.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
         }
 
         private void listBoxUserTools_MouseDoubleClick(object sender, MouseEventArgs e)

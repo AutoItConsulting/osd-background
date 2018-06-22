@@ -27,10 +27,12 @@ namespace AutoIt.OSD.Background
         private Form _formTools;
 
         private KeyboardHook _keyboardHook = new KeyboardHook();
-        private Color _progressBarBackColor;
 
-        private DockStyle _progressBarDock;
+        private bool _customBackgroundEnabled;
+
         private bool _progressBarEnabled;
+        private DockStyle _progressBarDock;
+        private Color _progressBarBackColor;
         private Color _progressBarForeColor;
         private int _progressBarHeight;
         private int _progressBarOffset;
@@ -223,7 +225,7 @@ namespace AutoIt.OSD.Background
             ProgressBarResize();
             ProgressBarRefresh();
 
-            // Push the Win7/Win10 progress screen to the bottom, then put our screen on top
+            // Push the Win7/Win10 progress screen to the bottom, then put our form on top of that
             BringToFrontOfWindowsSetupProgress();
 
             // Trap shutdown
@@ -247,15 +249,22 @@ namespace AutoIt.OSD.Background
         /// <param name="e"></param>
         private void FormBackground_Shown(object sender, EventArgs e)
         {
-            // Let form finish showing
-            Refresh();
+            if (_customBackgroundEnabled)
+            {
+                // Let the form finish showing (so if we kill a previous running version no flicker)
+                Refresh();
+
+                // Start the refresh timer
+                timerRefresh.Interval = (int)TimeSpan.FromSeconds(RefreshInervalSecs).TotalMilliseconds;
+                timerRefresh.Start();
+            }
+            else
+            {
+                Hide();
+            }
 
             // We don't want any other versions running - kill it after we have completely shown our new screen to reduce flicker
             KillPreviousInstance();
-
-            // Start the refresh timer
-            timerRefresh.Interval = (int)TimeSpan.FromSeconds(RefreshInervalSecs).TotalMilliseconds;
-            timerRefresh.Start();
         }
 
         /// <summary>
@@ -300,6 +309,8 @@ namespace AutoIt.OSD.Background
                 TextReader reader = new StreamReader(optionsFilename);
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
+                _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackgroundEnabled);
+
                 _progressBarEnabled = ConvertStringToBool(_xmlOptions.ProgressBarEnabled);
                 _progressBarHeight = _xmlOptions.ProgressBarHeight;
                 _progressBarOffset = _xmlOptions.ProgressBarOffset;
@@ -310,6 +321,12 @@ namespace AutoIt.OSD.Background
                 if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
                 {
                     return false;
+                }
+
+                // Can't have progress if no background
+                if (!_customBackgroundEnabled)
+                {
+                    _progressBarEnabled = false;
                 }
             }
             catch (Exception)
@@ -335,7 +352,10 @@ namespace AutoIt.OSD.Background
             }
 
             // Hide the background window because it causes issues when the user clicks on it
-            Hide();
+            if (_customBackgroundEnabled)
+            {
+                Hide();
+            }
 
             // Ask for password if needed
             var result = DialogResult.OK;
@@ -361,7 +381,12 @@ namespace AutoIt.OSD.Background
             }
 
             // Reshow the background and push it to the back again
-            Show();
+            if (_customBackgroundEnabled)
+            {
+                Show();
+            }
+
+            // Push the Win7/Win10 progress screen to the bottom, then put our form on top of that
             BringToFrontOfWindowsSetupProgress();
         }
 
@@ -370,12 +395,6 @@ namespace AutoIt.OSD.Background
         /// </summary>
         private void ProgressBarRefresh()
         {
-            if (!_progressBarEnabled)
-            {
-                progressBar.Visible = false;
-                return;
-            }
-
             // Get position in task sequence if there is one
             int currentInstruction;
             int lastInstruction;
@@ -386,7 +405,7 @@ namespace AutoIt.OSD.Background
                 currentInstruction = 50;
                 lastInstruction = 100;
 #else
-                // Get the current position in the task sequence
+                // Get the current position in the task sequence - will get blanks and exceptions if not in a TS
                 currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
                 lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
 #endif
@@ -413,6 +432,13 @@ namespace AutoIt.OSD.Background
 
             // If we reached here, we are in a task sequence, update flag
             _startedInTaskSequence = true;
+
+            // If bar is not enabled then nothing else to do
+            if (!_progressBarEnabled)
+            {
+                progressBar.Visible = false;
+                return;
+            }
 
             // Set percentage and make visible
             progressBar.Value = 100 * currentInstruction / lastInstruction;

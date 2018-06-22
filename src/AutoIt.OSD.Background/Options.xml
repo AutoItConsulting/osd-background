@@ -8,7 +8,10 @@
   <!-- Password to allow access to the tools window, leave blank for none -->
   <Password><![CDATA[Pass]]></Password>
 
-  <!-- Show progress bar for current task sequence progress -->
+  <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
+  <CustomBackgroundEnabled>true</CustomBackgroundEnabled>
+
+  <!-- Show progress bar for current task sequence progress. Requires CustomBackgroundEnabled to be true also. -->
   <ProgressBarEnabled>true</ProgressBarEnabled>
 
   <!-- The color of the progress bar in HTML/RGB format: #RRGGBB -->
@@ -22,10 +25,11 @@
   <ProgressBarOffset>0</ProgressBarOffset>
   
   <!-- Height of the progress bar -->
-  <ProgressBarHeight>8</ProgressBarHeight>
+  <ProgressBarHeight>16</ProgressBarHeight>
 
   <!-- List of tools -->
-  <!-- Can use environment variables in CommandLine and WorkingDirectory -->
+  <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
+  <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
   <UserTools>
     <UserTool>
       <Name>Command Prompt</Name>
@@ -33,12 +37,21 @@
       <Arguments></Arguments>
       <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
     </UserTool>
+
     <UserTool>
       <Name>Registry Editor</Name>
       <Program>regedit.exe</Program>
       <Arguments></Arguments>
       <WorkingDirectory></WorkingDirectory>
     </UserTool>
+    
+    <UserTool>
+      <Name>Task Manager</Name>
+      <Program>taskmgr.exe</Program>
+      <Arguments></Arguments>
+      <WorkingDirectory></WorkingDirectory>
+    </UserTool>
+
   </UserTools>
 
 </Options>

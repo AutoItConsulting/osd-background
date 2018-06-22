@@ -18,6 +18,9 @@ namespace AutoIt.OSD.Background
         [XmlElement("Password")]
         public string Password;
         
+        [XmlElement("CustomBackgroundEnabled")]
+        public string CustomBackgroundEnabled;
+        
         [XmlElement("ProgressBarEnabled")]
         public string ProgressBarEnabled;
 
