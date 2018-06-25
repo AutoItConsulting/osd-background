@@ -385,6 +385,9 @@ namespace AutoIt.OSD.Background
                 Hide();
             }
 
+            // Hide TS dialog
+            TaskSequence.CloseProgressDialog();
+
             // Ask for password if needed
             var result = DialogResult.OK;
             if (!string.IsNullOrEmpty(_xmlOptions.Password))
@@ -408,6 +411,7 @@ namespace AutoIt.OSD.Background
                 {
                     // Send close message to ourselves
                     Close();
+                    TaskSequence.ShowTSProgress();
                     return;
                 }
             }
@@ -420,6 +424,9 @@ namespace AutoIt.OSD.Background
 
             // Push the Win7/Win10 progress screen to the bottom, then put our form on top of that
             BringToFrontOfWindowsSetupProgress();
+
+            // Reshow TS progress
+            TaskSequence.ShowTSProgress();
         }
 
         /// <summary>

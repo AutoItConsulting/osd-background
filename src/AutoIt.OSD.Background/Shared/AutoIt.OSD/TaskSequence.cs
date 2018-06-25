@@ -9,6 +9,7 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Windows.Forms;
+using ProgressUILib;
 using TSEnvironmentLib;
 
 // ReSharper disable once CheckNamespace
@@ -76,6 +77,55 @@ namespace AutoIt.OSD
             }
 
             return variablesDictionary;
+        }
+
+        /// <summary>
+        /// Hides the task sequence progress UI dialog
+        /// </summary>
+        public static void CloseProgressDialog()
+        {
+            try
+            {
+                IProgressUI progressUI = new ProgressUI();
+                progressUI.CloseProgressDialog();
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        }
+
+        /// <summary>
+        /// Show the task sequence dialog with default values.
+        /// </summary>
+        public static void ShowTSProgress()
+        {
+            ShowTSProgress(null, null, null, null);
+        }
+
+        /// <summary>
+        /// Show the task sequence dialog. Use null to indicate default values.
+        /// </summary>
+        public static void ShowTSProgress(string orgName, string tsName, string customTitle, string curAction)
+        {
+            try
+            {
+                IProgressUI progressUI = new ProgressUI();
+                ITSEnvClass tsEnvVar = new TSEnvClass();
+
+                orgName = orgName == null ? tsEnvVar["_SMSTSOrgName"] : orgName;
+                tsName = tsName == null ?  tsEnvVar["SMSTSPackageName"] : tsName;
+                customTitle = customTitle == null ? tsEnvVar["_SMSTSCustomProgressDialogMessage"] : customTitle;
+                curAction = curAction == null ? tsEnvVar["_SMSTSCurrentActionName"] : curAction;
+                
+                uint uStep = Convert.ToUInt32(tsEnvVar["_SMSTSNextInstructionPointer"]);
+                uint uMaxStep = Convert.ToUInt32(tsEnvVar["_SMSTSInstructionTableSize"]);
+                progressUI.ShowTSProgress(orgName, tsName, customTitle, curAction, uStep, uMaxStep);
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
         }
 
         /// <summary>

@@ -56,6 +56,10 @@
     <ApplicationIcon>Resources\main.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ProgressUILib_DotNet40">
+      <HintPath>ReferenceAssemblies\TSCore\ProgressUILib_DotNet40.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
