@@ -328,15 +328,15 @@ namespace AutoIt.OSD.Background
                 TextReader reader = new StreamReader(optionsFilename);
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
-                _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackgroundEnabled);
+                _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.Enabled);
                 _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
 
-                _progressBarEnabled = ConvertStringToBool(_xmlOptions.ProgressBarEnabled);
-                _progressBarHeight = _xmlOptions.ProgressBarHeight;
-                _progressBarOffset = _xmlOptions.ProgressBarOffset;
-                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.ProgressBarDock, true);
-                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.ProgressBarForeColor);
-                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.ProgressBarBackColor);
+                _progressBarEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.ProgressBarEnabled);
+                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBarHeight;
+                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBarOffset;
+                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBarDock, true);
+                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBarForeColor);
+                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBarBackColor);
 
                 if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
                 {

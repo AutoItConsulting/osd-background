@@ -17,10 +17,22 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("Password")]
         public string Password { get; set; }
-        
-        [XmlElement("CustomBackgroundEnabled")]
-        public string CustomBackgroundEnabled { get; set; }
-        
+
+        [XmlElement("CustomBackground")]
+        public OSDCustomBackground CustomBackground { get; set; }
+
+        [XmlElement("UserTools")]
+        public UserTools UserTools { get; set; }
+    }
+
+    public class OSDCustomBackground
+    {
+        [XmlElement("Enabled")]
+        public string Enabled { get; set; }
+
+        [XmlElement("ImageFile")]
+        public string ImageFile { get; set; }
+
         [XmlElement("ProgressBarEnabled")]
         public string ProgressBarEnabled { get; set; }
 
@@ -38,19 +50,15 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("ProgressBarHeight")]
         public int ProgressBarHeight { get; set; }
-
-        [XmlElement("UserTools")] 
-        public UserTools UserTools { get; set; }
     }
 
     public class UserTools
     {
+        [XmlArray("Tools")] [XmlArrayItem("Tool")]
+        public List<UserTool> UserToolList = new List<UserTool>();
+
         [XmlElement("Enabled")]
         public string Enabled { get; set; }
-
-        [XmlArray("Tools")]
-        [XmlArrayItem("Tool")]
-        public List<UserTool> UserToolList = new List<UserTool>();
     }
 
     public class UserTool

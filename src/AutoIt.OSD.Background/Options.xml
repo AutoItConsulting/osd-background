@@ -8,24 +8,31 @@
   <!-- Password to allow access to the tools window, leave blank for none -->
   <Password><![CDATA[]]></Password>
   
-  <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
-  <CustomBackgroundEnabled>true</CustomBackgroundEnabled>
+  <CustomBackground>
 
-  <!-- Show progress bar for current task sequence progress. Requires CustomBackgroundEnabled to be true also. -->
-  <ProgressBarEnabled>true</ProgressBarEnabled>
+    <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
+    <Enabled>true</Enabled>
 
-  <!-- The color of the progress bar in HTML/RGB format: #RRGGBB -->
-  <ProgressBarForeColor>#5D83AC</ProgressBarForeColor>
-  <ProgressBarBackColor>#FFFFFF</ProgressBarBackColor>
+    <!-- Path to a jpeg/PNG/bitmap. If blank uses current wallpaper -->
+    <!-- <ImageFile></ImageFile> -->
 
-  <!-- Location of the progress bar. Top or Bottom -->
-  <ProgressBarDock>Bottom</ProgressBarDock>
+    <!-- Show progress bar for current task sequence progress. Requires CustomBackgroundEnabled to be true also. -->
+    <ProgressBarEnabled>true</ProgressBarEnabled>
+
+    <!-- The color of the progress bar in HTML/RGB format: #RRGGBB -->
+    <ProgressBarForeColor>#5D83AC</ProgressBarForeColor>
+    <ProgressBarBackColor>#FFFFFF</ProgressBarBackColor>
+
+    <!-- Location of the progress bar. Top or Bottom -->
+    <ProgressBarDock>Bottom</ProgressBarDock>
   
-  <!-- Offset in pixels from the Top or Bottom of the screen -->
-  <ProgressBarOffset>0</ProgressBarOffset>
+    <!-- Offset in pixels from the Top or Bottom of the screen -->
+    <ProgressBarOffset>0</ProgressBarOffset>
   
-  <!-- Height of the progress bar -->
-  <ProgressBarHeight>16</ProgressBarHeight>
+    <!-- Height of the progress bar -->
+    <ProgressBarHeight>16</ProgressBarHeight>
+
+  </CustomBackground>
 
   <!-- User defined cmd lines and tools to run -->
   <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
