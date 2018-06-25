@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -22,12 +23,21 @@ namespace AutoIt.OSD.Background
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         private bool _userToolsEnabled;
         private Options _xmlOptions;
+        DataGridViewCellStyle _readonlyStyle;
+
 
         public FormTools(Options xmlOptions)
         {
             _xmlOptions = xmlOptions;
 
             InitializeComponent();
+
+            // Our readonly row style for the grid view
+            _readonlyStyle = new DataGridViewCellStyle
+            {
+                Font = new Font(dgvTaskSequenceVariables.Font, FontStyle.Italic)
+            };
+
         }
 
         /// <summary>
@@ -180,7 +190,7 @@ namespace AutoIt.OSD.Background
                     // Can't set variables that start with _
                     if (varName.StartsWith("_"))
                     {
-                        MessageBox.Show("Unable to create variables that being with an underscore.", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        MessageBox.Show("Unable to create variables that begin with an underscore.", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         row.Cells[0].Value = null;
                         row.Cells[1].Value = null;
                         return;
@@ -289,6 +299,13 @@ namespace AutoIt.OSD.Background
                         if (string.IsNullOrEmpty(kvp.Key) || !TaskSequence.IsPasswordVariable(kvp.Key))
                         {
                             row.CreateCells(dgvTaskSequenceVariables, kvp.Key, kvp.Value);
+
+                            // Make readonly variables readonly rows
+                            if (kvp.Key.StartsWith("_"))
+                            {
+                                row.ReadOnly = true;
+                                row.DefaultCellStyle = _readonlyStyle;
+                            }
                         }
                         else
                         {
