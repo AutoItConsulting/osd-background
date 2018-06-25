@@ -17,6 +17,7 @@ namespace AutoIt.OSD.Background
     public partial class FormTools : Form
     {
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
+        private bool _userToolsEnabled;
         private Options _xmlOptions;
 
         public FormTools(Options xmlOptions)
@@ -24,6 +25,27 @@ namespace AutoIt.OSD.Background
             _xmlOptions = xmlOptions;
 
             InitializeComponent();
+        }
+
+        /// <summary>
+        ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">String is not a valid bool.</exception>
+        private static bool ConvertStringToBool(string input)
+        {
+            if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
+            {
+                return true;
+            }
+
+            if (input.ToUpper() == "FALSE" || input.ToUpper() == "OFF" || input == "0")
+            {
+                return false;
+            }
+
+            throw new ArgumentException();
         }
 
         private void buttonUserToolRun_Click(object sender, EventArgs e)
@@ -106,14 +128,24 @@ namespace AutoIt.OSD.Background
             // Set main icon
             Icon = Resources.main;
 
-            listBoxUserTools.DataSource = _xmlOptions.UserTools;
-            listBoxUserTools.DisplayMember = "Name";
+            _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.UserToolsEnabled);
 
-            listBoxUserTools.Select();
+            // Showing the tools tab?
+            if (_userToolsEnabled)
+            {
+                listBoxUserTools.DataSource = _xmlOptions.UserTools.UserToolList;
+                listBoxUserTools.DisplayMember = "Name";
 
-            // Select first tab
-            tabControl.SelectTab("tabUserTools");
-            AcceptButton = buttonUserToolRun;
+                listBoxUserTools.Select();
+
+                // Select first tab
+                tabControl.SelectTab(tabUserTools);
+                AcceptButton = buttonUserToolRun;
+            }
+            else
+            {
+                tabControl.TabPages.Remove(tabUserTools);
+            }
 
             // Get tools window close to the top so that user can see it
             BringToFront();

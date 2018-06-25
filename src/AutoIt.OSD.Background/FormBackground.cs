@@ -24,15 +24,15 @@ namespace AutoIt.OSD.Background
         private const int RefreshInervalSecs = 1;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
+        private bool _customBackgroundEnabled;
+
         private Form _formTools;
 
         private KeyboardHook _keyboardHook = new KeyboardHook();
-
-        private bool _customBackgroundEnabled;
+        private Color _progressBarBackColor;
+        private DockStyle _progressBarDock;
 
         private bool _progressBarEnabled;
-        private DockStyle _progressBarDock;
-        private Color _progressBarBackColor;
         private Color _progressBarForeColor;
         private int _progressBarHeight;
         private int _progressBarOffset;
@@ -370,8 +370,6 @@ namespace AutoIt.OSD.Background
             // If password is ok, launch the tools
             if (result == DialogResult.OK)
             {
-                
-
                 using (_formTools = new FormTools(_xmlOptions))
                 {
                     _formTools.ShowDialog();
@@ -405,7 +403,8 @@ namespace AutoIt.OSD.Background
                 currentInstruction = 50;
                 lastInstruction = 100;
 #else
-                // Get the current position in the task sequence - will get blanks and exceptions if not in a TS
+
+// Get the current position in the task sequence - will get blanks and exceptions if not in a TS
                 currentInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSNextInstructionPointer")) + 1;
                 lastInstruction = int.Parse(TaskSequence.GetVariable("_SMSTSInstructionTableSize")) + 1;
 #endif
@@ -515,7 +514,7 @@ namespace AutoIt.OSD.Background
             // Set the form bitmap and force display to primary monitor
             StartPosition = FormStartPosition.Manual;
             Location = Screen.PrimaryScreen.Bounds.Location;
-            
+
             // Don't use Maximized as it goes over the task bar which can be ugly
             //WindowState = FormWindowState.Maximized;
             Size = new Size(Screen.GetWorkingArea(this).Width, Screen.GetWorkingArea(this).Height);

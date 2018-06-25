@@ -13,36 +13,44 @@ namespace AutoIt.OSD.Background
     public class Options
     {
         [XmlElement("Title")]
-        public string Title;
+        public string Title { get; set; }
 
         [XmlElement("Password")]
-        public string Password;
+        public string Password { get; set; }
         
         [XmlElement("CustomBackgroundEnabled")]
-        public string CustomBackgroundEnabled;
+        public string CustomBackgroundEnabled { get; set; }
         
         [XmlElement("ProgressBarEnabled")]
-        public string ProgressBarEnabled;
+        public string ProgressBarEnabled { get; set; }
 
         [XmlElement("ProgressBarForeColor")]
-        public string ProgressBarForeColor;
+        public string ProgressBarForeColor { get; set; }
 
         [XmlElement("ProgressBarBackColor")]
-        public string ProgressBarBackColor;
+        public string ProgressBarBackColor { get; set; }
 
         [XmlElement("ProgressBarDock")]
-        public string ProgressBarDock;
+        public string ProgressBarDock { get; set; }
 
         [XmlElement("ProgressBarOffset")]
-        public int ProgressBarOffset;
+        public int ProgressBarOffset { get; set; }
 
         [XmlElement("ProgressBarHeight")]
-        public int ProgressBarHeight;
+        public int ProgressBarHeight { get; set; }
 
-        [XmlArray("UserTools")]
+        [XmlElement("UserTools")] 
+        public UserTools UserTools { get; set; }
+    }
+
+    public class UserTools
+    {
+        [XmlElement("UserToolsEnabled")]
+        public string UserToolsEnabled { get; set; }
+
+        [XmlArray("UserToolList")]
         [XmlArrayItem("UserTool")]
-        public List<UserTool> UserTools = new List<UserTool>();
-
+        public List<UserTool> UserToolList = new List<UserTool>();
     }
 
     public class UserTool

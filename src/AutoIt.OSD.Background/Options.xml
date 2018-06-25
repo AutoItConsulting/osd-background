@@ -31,26 +31,34 @@
   <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
   <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
   <UserTools>
-    <UserTool>
-      <Name>Command Prompt</Name>
-      <Program>cmd.exe</Program>
-      <Arguments></Arguments>
-      <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
-    </UserTool>
-
-    <UserTool>
-      <Name>Registry Editor</Name>
-      <Program>regedit.exe</Program>
-      <Arguments></Arguments>
-      <WorkingDirectory></WorkingDirectory>
-    </UserTool>
     
-    <UserTool>
-      <Name>Task Manager</Name>
-      <Program>taskmgr.exe</Program>
-      <Arguments></Arguments>
-      <WorkingDirectory></WorkingDirectory>
-    </UserTool>
+    <!-- Set to true to enable the user tools tab -->
+    <UserToolsEnabled>true</UserToolsEnabled>
+
+    <UserToolList>
+
+      <UserTool>
+        <Name>Command Prompt</Name>
+        <Program>cmd.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
+      </UserTool>
+
+      <UserTool>
+        <Name>Registry Editor</Name>
+        <Program>regedit.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </UserTool>
+    
+      <UserTool>
+        <Name>Task Manager</Name>
+        <Program>taskmgr.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </UserTool>
+
+    </UserToolList>
 
   </UserTools>
 
