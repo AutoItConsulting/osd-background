@@ -7,7 +7,7 @@
 
   <!-- Password to allow access to the tools window, leave blank for none -->
   <Password><![CDATA[]]></Password>
-
+  
   <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
   <CustomBackgroundEnabled>true</CustomBackgroundEnabled>
 
@@ -27,38 +27,39 @@
   <!-- Height of the progress bar -->
   <ProgressBarHeight>16</ProgressBarHeight>
 
-  <!-- List of tools -->
+  <!-- User defined cmd lines and tools to run -->
   <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
   <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
   <UserTools>
     
     <!-- Set to true to enable the user tools tab -->
-    <UserToolsEnabled>true</UserToolsEnabled>
+    <Enabled>true</Enabled>
 
-    <UserToolList>
+    <!-- List of tools -->
+    <Tools>
 
-      <UserTool>
+      <Tool>
         <Name>Command Prompt</Name>
         <Program>cmd.exe</Program>
         <Arguments></Arguments>
         <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
-      </UserTool>
+      </Tool>
 
-      <UserTool>
+      <Tool>
         <Name>Registry Editor</Name>
         <Program>regedit.exe</Program>
         <Arguments></Arguments>
         <WorkingDirectory></WorkingDirectory>
-      </UserTool>
+      </Tool>
     
-      <UserTool>
+      <Tool>
         <Name>Task Manager</Name>
         <Program>taskmgr.exe</Program>
         <Arguments></Arguments>
         <WorkingDirectory></WorkingDirectory>
-      </UserTool>
+      </Tool>
 
-    </UserToolList>
+    </Tools>
 
   </UserTools>
 

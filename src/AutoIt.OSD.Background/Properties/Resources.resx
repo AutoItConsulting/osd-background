@@ -130,4 +130,10 @@
 Exception text:
 </value>
   </data>
+  <data name="UnableToCreateVariabledWithUnderscore" xml:space="preserve">
+    <value>Unable to create variables that begin with an underscore.</value>
+  </data>
+  <data name="VariableNameAlreadyExists" xml:space="preserve">
+    <value>Variable name already exists.</value>
+  </data>
 </root>

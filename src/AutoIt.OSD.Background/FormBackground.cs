@@ -25,6 +25,7 @@ namespace AutoIt.OSD.Background
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
         private bool _customBackgroundEnabled;
+        private bool _userToolsEnabled;
 
         private Form _formTools;
 
@@ -108,7 +109,7 @@ namespace AutoIt.OSD.Background
                 return false;
             }
 
-            throw new ArgumentException();
+            throw new ArgumentException("Invalid string input for conversion to bool.");
         }
 
         /// <summary>
@@ -328,6 +329,7 @@ namespace AutoIt.OSD.Background
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
                 _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackgroundEnabled);
+                _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
 
                 _progressBarEnabled = ConvertStringToBool(_xmlOptions.ProgressBarEnabled);
                 _progressBarHeight = _xmlOptions.ProgressBarHeight;
@@ -369,6 +371,12 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
+            // Ignore if there are no possible tabs enabled
+            if (_userToolsEnabled == false)
+            {
+                return;
+            }
+
             // Hide the background window because it causes issues when the user clicks on it
             if (_customBackgroundEnabled)
             {
@@ -388,19 +396,18 @@ namespace AutoIt.OSD.Background
             // If password is ok, launch the tools
             if (result == DialogResult.OK)
             {
-                using (_formTools = new FormTools(_xmlOptions))
-                {
-                    result =_formTools.ShowDialog();
-
-                    // Check if closed via the "Close App" button 
-                    if (result == DialogResult.Abort)
-                    {
-                        // Send close message to ourselves
-                        Close();
-                    }
-                }
-
+                _formTools = new FormTools(_xmlOptions);
+                result =_formTools.ShowDialog();
+                _formTools.Dispose();
                 _formTools = null;
+
+                // Check if closed via the "Close App" button 
+                if (result == DialogResult.Abort)
+                {
+                    // Send close message to ourselves
+                    Close();
+                    return;
+                }
             }
 
             // Reshow the background and push it to the back again

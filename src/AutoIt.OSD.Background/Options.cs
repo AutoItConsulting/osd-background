@@ -45,11 +45,11 @@ namespace AutoIt.OSD.Background
 
     public class UserTools
     {
-        [XmlElement("UserToolsEnabled")]
-        public string UserToolsEnabled { get; set; }
+        [XmlElement("Enabled")]
+        public string Enabled { get; set; }
 
-        [XmlArray("UserToolList")]
-        [XmlArrayItem("UserTool")]
+        [XmlArray("Tools")]
+        [XmlArrayItem("Tool")]
         public List<UserTool> UserToolList = new List<UserTool>();
     }
 

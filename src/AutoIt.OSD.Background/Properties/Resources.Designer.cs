@@ -90,5 +90,23 @@ namespace AutoIt.OSD.Background.Properties {
                 return ((System.Drawing.Icon)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to create variables that begin with an underscore..
+        /// </summary>
+        internal static string UnableToCreateVariabledWithUnderscore {
+            get {
+                return ResourceManager.GetString("UnableToCreateVariabledWithUnderscore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variable name already exists..
+        /// </summary>
+        internal static string VariableNameAlreadyExists {
+            get {
+                return ResourceManager.GetString("VariableNameAlreadyExists", resourceCulture);
+            }
+        }
     }
 }
