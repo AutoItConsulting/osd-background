@@ -101,6 +101,33 @@ namespace AutoIt.OSD.Background.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to load user wallpaper..
+        /// </summary>
+        internal static string UnableToLoadUserWallpaper {
+            get {
+                return ResourceManager.GetString("UnableToLoadUserWallpaper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to read or parse Options.xml file..
+        /// </summary>
+        internal static string UnableToParseXml {
+            get {
+                return ResourceManager.GetString("UnableToParseXml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to register hotkey. Is the application already running?.
+        /// </summary>
+        internal static string UnableToRegisterHotkey {
+            get {
+                return ResourceManager.GetString("UnableToRegisterHotkey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Variable name already exists..
         /// </summary>
         internal static string VariableNameAlreadyExists {

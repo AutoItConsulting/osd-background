@@ -136,4 +136,13 @@ Exception text:
   <data name="VariableNameAlreadyExists" xml:space="preserve">
     <value>Variable name already exists.</value>
   </data>
+  <data name="UnableToLoadUserWallpaper" xml:space="preserve">
+    <value>Unable to load user wallpaper.</value>
+  </data>
+  <data name="UnableToRegisterHotkey" xml:space="preserve">
+    <value>Unable to register hotkey. Is the application already running?</value>
+  </data>
+  <data name="UnableToParseXml" xml:space="preserve">
+    <value>Unable to read or parse Options.xml file.</value>
+  </data>
 </root>

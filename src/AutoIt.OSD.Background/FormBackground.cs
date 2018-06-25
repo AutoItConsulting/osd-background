@@ -226,7 +226,7 @@ namespace AutoIt.OSD.Background
             // First update of background image
             if (RefreshBackgroundImage(true) == false)
             {
-                MessageBox.Show(@"Unable to load user wallpaper.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.UnableToLoadUserWallpaper, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return;
@@ -281,7 +281,7 @@ namespace AutoIt.OSD.Background
             }
             catch (Exception)
             {
-                MessageBox.Show("Unable to register hotkey. Is the application already running?", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.UnableToRegisterHotkey, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
             }
         }
@@ -302,7 +302,7 @@ namespace AutoIt.OSD.Background
                 if (arg == "/?" || arg == "?")
                 {
                     var usage = @"AutoIt.OSD.Background [/Close] | [Options.xml]";
-                    MessageBox.Show(usage, AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(usage, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
                 }
 
@@ -331,12 +331,12 @@ namespace AutoIt.OSD.Background
                 _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.Enabled);
                 _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
 
-                _progressBarEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.ProgressBarEnabled);
-                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBarHeight;
-                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBarOffset;
-                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBarDock, true);
-                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBarForeColor);
-                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBarBackColor);
+                _progressBarEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.ProgressBar.Enabled);
+                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
+                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBar.Offset;
+                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBar.Dock, true);
+                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.ForeColor);
+                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.BackColor);
 
                 if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
                 {
@@ -351,7 +351,7 @@ namespace AutoIt.OSD.Background
             }
             catch (Exception)
             {
-                MessageBox.Show(@"Unable to read or parse Options.xml file.", AppDomain.CurrentDomain.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(Resources.UnableToParseXml, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 

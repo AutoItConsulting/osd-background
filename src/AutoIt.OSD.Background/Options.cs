@@ -19,13 +19,13 @@ namespace AutoIt.OSD.Background
         public string Password { get; set; }
 
         [XmlElement("CustomBackground")]
-        public OSDCustomBackground CustomBackground { get; set; }
+        public OsdCustomBackground CustomBackground { get; set; }
 
         [XmlElement("UserTools")]
         public UserTools UserTools { get; set; }
     }
 
-    public class OSDCustomBackground
+    public class OsdCustomBackground
     {
         [XmlElement("Enabled")]
         public string Enabled { get; set; }
@@ -33,23 +33,29 @@ namespace AutoIt.OSD.Background
         [XmlElement("ImageFile")]
         public string ImageFile { get; set; }
 
-        [XmlElement("ProgressBarEnabled")]
-        public string ProgressBarEnabled { get; set; }
+        [XmlElement("ProgressBar")]
+        public OsdProgressBar ProgressBar { get; set; }
+    }
 
-        [XmlElement("ProgressBarForeColor")]
-        public string ProgressBarForeColor { get; set; }
+    public class OsdProgressBar
+    {
+        [XmlElement("Enabled")]
+        public string Enabled { get; set; }
 
-        [XmlElement("ProgressBarBackColor")]
-        public string ProgressBarBackColor { get; set; }
+        [XmlElement("ForeColor")]
+        public string ForeColor { get; set; }
 
-        [XmlElement("ProgressBarDock")]
-        public string ProgressBarDock { get; set; }
+        [XmlElement("BackColor")]
+        public string BackColor { get; set; }
 
-        [XmlElement("ProgressBarOffset")]
-        public int ProgressBarOffset { get; set; }
+        [XmlElement("Dock")]
+        public string Dock { get; set; }
 
-        [XmlElement("ProgressBarHeight")]
-        public int ProgressBarHeight { get; set; }
+        [XmlElement("Offset")]
+        public int Offset { get; set; }
+
+        [XmlElement("Height")]
+        public int Height { get; set; }
     }
 
     public class UserTools
