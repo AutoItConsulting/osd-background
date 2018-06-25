@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Options>
 
@@ -7,7 +7,7 @@
 
   <!-- Password to allow access to the tools window, leave blank for none -->
   <Password><![CDATA[]]></Password>
-  
+
   <!-- Custom background options -->
   <CustomBackground>
 
@@ -29,10 +29,10 @@
 
       <!-- Location of the progress bar. Top or Bottom -->
       <Dock>Bottom</Dock>
-  
+
       <!-- Offset in pixels from the Top or Bottom of the screen -->
       <Offset>0</Offset>
-  
+
       <!-- Height of the progress bar -->
       <Height>8</Height>
 
@@ -41,14 +41,14 @@
   </CustomBackground>
 
   <!-- User defined cmd lines and tools to run -->
-  <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
-  <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
   <UserTools>
-    
+
     <!-- Set to true to enable the user tools tab -->
     <Enabled>true</Enabled>
 
     <!-- List of tools -->
+    <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
+    <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
     <Tools>
 
       <Tool>
@@ -64,7 +64,7 @@
         <Arguments></Arguments>
         <WorkingDirectory></WorkingDirectory>
       </Tool>
-    
+
       <Tool>
         <Name>Task Manager</Name>
         <Program>taskmgr.exe</Program>
@@ -75,5 +75,16 @@
     </Tools>
 
   </UserTools>
+
+  <!-- Read and write task sequence variables -->
+  <TaskSequenceVariables>
+    
+    <!-- Set to true to enable the tab -->
+    <Enabled>true</Enabled>
+    
+    <!-- Set to true to make the tab read only -->
+    <ReadOnly>false</ReadOnly>
+
+  </TaskSequenceVariables>
 
 </Options>

@@ -23,6 +23,9 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("UserTools")]
         public UserTools UserTools { get; set; }
+
+        [XmlElement("TaskSequenceVariables")]
+        public OsdTaskSequenceVariables TaskSequenceVariables { get; set; }
     }
 
     public class OsdCustomBackground
@@ -80,5 +83,14 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("WorkingDirectory")]
         public string WorkingDirectory { get; set; }
+    }
+
+    public class OsdTaskSequenceVariables
+    {
+        [XmlElement("Enabled")]
+        public string Enabled { get; set; }
+
+        [XmlElement("ReadOnly")]
+        public string ReadOnly { get; set; }
     }
 }

@@ -20,9 +20,11 @@ namespace AutoIt.OSD.Background
     public partial class FormTools : Form
     {
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
-        private DataGridViewCellStyle _readonlyStyle;
+        private DataGridViewCellStyle _rowStyleReadOnly;
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         private bool _userToolsEnabled;
+        private bool _taskSequenceVariablesEnabled;
+        private bool _taskSequenceVariablesReadOnly;
         private Options _xmlOptions;
 
         /// <summary>
@@ -36,7 +38,7 @@ namespace AutoIt.OSD.Background
             InitializeComponent();
 
             // Our readonly row style for the grid view
-            _readonlyStyle = new DataGridViewCellStyle
+            _rowStyleReadOnly = new DataGridViewCellStyle
             {
                 Font = new Font(dgvTaskSequenceVariables.Font, FontStyle.Italic)
             };
@@ -267,10 +269,14 @@ namespace AutoIt.OSD.Background
             try
             {
                 _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
+                _taskSequenceVariablesEnabled = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.Enabled);
+                _taskSequenceVariablesReadOnly = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.ReadOnly);
             }
             catch (Exception)
             {
-                _userToolsEnabled = false;
+                MessageBox.Show(Resources.UnableToParseXml, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DialogResult = DialogResult.Abort;
+                Close();
             }
 
             // Showing the tools tab?
@@ -289,6 +295,15 @@ namespace AutoIt.OSD.Background
             {
                 tabControl.TabPages.Remove(tabUserTools);
             }
+
+            // Showing the task sequence?
+            if (_taskSequenceVariablesEnabled == false)
+            {
+                tabControl.TabPages.Remove(tabVariables);
+            }
+
+            // No info yet
+            tabControl.TabPages.Remove(tabInformation);
 
             // Get tools window close to the top so that user can see it
             BringToFront();
@@ -356,17 +371,17 @@ namespace AutoIt.OSD.Background
                         if (string.IsNullOrEmpty(kvp.Key) || !TaskSequence.IsPasswordVariable(kvp.Key))
                         {
                             row.CreateCells(dgvTaskSequenceVariables, kvp.Key, kvp.Value);
-
-                            // Make readonly variables readonly rows
-                            if (kvp.Key.StartsWith("_"))
-                            {
-                                row.ReadOnly = true;
-                                row.DefaultCellStyle = _readonlyStyle;
-                            }
                         }
                         else
                         {
                             row.CreateCells(dgvTaskSequenceVariables, kvp.Key, @"******** (Password removed)");
+                        }
+
+                        // Make readonly variables readonly rows
+                        if (_taskSequenceVariablesReadOnly || kvp.Key.StartsWith("_"))
+                        {
+                            row.ReadOnly = true;
+                            row.DefaultCellStyle = _rowStyleReadOnly;
                         }
 
                         return row;

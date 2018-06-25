@@ -26,6 +26,7 @@ namespace AutoIt.OSD.Background
 
         private bool _customBackgroundEnabled;
         private bool _userToolsEnabled;
+        private bool _taskSequenceVariablesEnabled;
 
         private Form _formTools;
 
@@ -330,6 +331,7 @@ namespace AutoIt.OSD.Background
 
                 _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.Enabled);
                 _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
+                _taskSequenceVariablesEnabled = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.Enabled);
 
                 _progressBarEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.ProgressBar.Enabled);
                 _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
@@ -372,7 +374,7 @@ namespace AutoIt.OSD.Background
             }
 
             // Ignore if there are no possible tabs enabled
-            if (_userToolsEnabled == false)
+            if (_userToolsEnabled == false && _taskSequenceVariablesEnabled == false)
             {
                 return;
             }
