@@ -5,9 +5,11 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using AutoIt.OSD.Background.Properties;
@@ -17,6 +19,7 @@ namespace AutoIt.OSD.Background
     public partial class FormTools : Form
     {
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
+        private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         private bool _userToolsEnabled;
         private Options _xmlOptions;
 
@@ -46,6 +49,12 @@ namespace AutoIt.OSD.Background
             }
 
             throw new ArgumentException();
+        }
+
+        private void buttonCloseApp_Click(object sender, EventArgs e)
+        {
+            // Use the Abort result to signify that we want to unload the entire app
+            DialogResult = DialogResult.Abort;
         }
 
         private void buttonUserToolRun_Click(object sender, EventArgs e)
@@ -120,6 +129,91 @@ namespace AutoIt.OSD.Background
             }
         }
 
+        private void buttonVariablesRefresh_Click(object sender, EventArgs e)
+        {
+            _taskSequenceDictionary = TaskSequence.GetAllVariables();
+            VariablesDictionaryViewUpdate();
+        }
+
+        private void dgvTaskSequenceVariables_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            // If we editing values allow anything as long as the name is there
+            if (e.ColumnIndex == 1)
+            {
+                if (dgvTaskSequenceVariables.Rows[e.RowIndex].Cells[0].Value == null)
+                {
+                    e.Cancel = true;
+                }
+
+                return;
+            }
+
+            // Column 0
+
+            // If previous entry has a blank name don't allow
+            if (e.RowIndex > 0 && dgvTaskSequenceVariables.Rows[e.RowIndex - 1].Cells[e.ColumnIndex].Value == null)
+            {
+                // Deny edit
+                e.Cancel = true;
+                return;
+            }
+
+            // Only allow editing names that are blank (i.e. new rows)
+            if (dgvTaskSequenceVariables.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
+            {
+                // Deny edit
+                e.Cancel = true;
+            }
+        }
+
+        private void dgvTaskSequenceVariables_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridViewRow row = dgvTaskSequenceVariables.Rows[e.RowIndex];
+
+            var varName = (string)row.Cells[0].Value;
+            var varValue = (string)row.Cells[1].Value;
+
+            if (e.ColumnIndex == 0)
+            {
+                if (!string.IsNullOrEmpty(varName))
+                {
+                    // Can't set variables that start with _
+                    if (varName.StartsWith("_"))
+                    {
+                        MessageBox.Show("Unable to create variables that being with an underscore.", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        row.Cells[0].Value = null;
+                        row.Cells[1].Value = null;
+                        return;
+                    }
+
+                    if (_taskSequenceDictionary.ContainsKey(varName))
+                    {
+                        MessageBox.Show("Variable name already exists.", Text, MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        row.Cells[0].Value = null;
+                        row.Cells[1].Value = null;
+                        return;
+                    }
+                }
+            }
+
+            // Only update if the name is valid
+            if (!string.IsNullOrEmpty(varName))
+            {
+                if (!string.IsNullOrEmpty(varValue))
+                {
+                    _taskSequenceDictionary[varName] = varValue;
+                    TaskSequence.SetVariable(varName, varValue);
+                }
+                else
+                {
+                    _taskSequenceDictionary[varName] = "";
+                    TaskSequence.SetVariable(varName, "");
+                }
+
+                //VariablesDictionaryViewUpdate();
+            }
+        }
+
         private void FormTools_Load(object sender, EventArgs e)
         {
             // Set title
@@ -149,6 +243,9 @@ namespace AutoIt.OSD.Background
 
             // Get tools window close to the top so that user can see it
             BringToFront();
+
+            _taskSequenceDictionary = TaskSequence.GetAllVariables();
+            VariablesDictionaryViewUpdate();
         }
 
         private void listBoxUserTools_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -177,6 +274,29 @@ namespace AutoIt.OSD.Background
         {
             // Don't allow selection if the tab is disabled
             e.Cancel = !e.TabPage.Enabled;
+        }
+
+        private void VariablesDictionaryViewUpdate()
+        {
+            //_UpdateDictionaryListView();
+            dgvTaskSequenceVariables.Rows.Clear();
+            dgvTaskSequenceVariables.Rows.AddRange(
+                _taskSequenceDictionary.OrderBy(kvp => kvp.Key).Select(
+                    kvp =>
+                    {
+                        var row = new DataGridViewRow();
+
+                        if (string.IsNullOrEmpty(kvp.Key) || !TaskSequence.IsPasswordVariable(kvp.Key))
+                        {
+                            row.CreateCells(dgvTaskSequenceVariables, kvp.Key, kvp.Value);
+                        }
+                        else
+                        {
+                            row.CreateCells(dgvTaskSequenceVariables, kvp.Key, @"******** (Password removed)");
+                        }
+
+                        return row;
+                    }).ToArray());
         }
     }
 }

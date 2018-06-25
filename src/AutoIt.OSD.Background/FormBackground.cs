@@ -140,10 +140,20 @@ namespace AutoIt.OSD.Background
         /// </summary>
         private static void KillPreviousInstance()
         {
-            Process[] pname = Process.GetProcessesByName(AppDomain.CurrentDomain.FriendlyName.Remove(AppDomain.CurrentDomain.FriendlyName.Length - 4));
-            if (pname.Length > 1)
+            Process[] processes = Process.GetProcessesByName(AppDomain.CurrentDomain.FriendlyName.Remove(AppDomain.CurrentDomain.FriendlyName.Length - 4));
+            if (processes.Length <= 1)
             {
-                pname.First(p => p.Id != Process.GetCurrentProcess().Id).Kill();
+                return;
+            }
+
+            foreach (Process process in processes)
+            {
+                if (process.Id != Process.GetCurrentProcess().Id)
+                {
+                    process.Kill();
+                    process.WaitForExit(5000);
+                    break;
+                }
             }
         }
 
@@ -234,10 +244,6 @@ namespace AutoIt.OSD.Background
             // Trap display change
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
-            // Register a global keyboard hook to bring up the tools menu
-            _keyboardHook.KeyPressed += KeyboardHook_OnPressed;
-            _keyboardHook.RegisterHotKey(Background.ModifierKeys.Control | Background.ModifierKeys.Alt, Keys.F12);
-
             // By default assume not in a task sequence
             _startedInTaskSequence = false;
         }
@@ -265,6 +271,18 @@ namespace AutoIt.OSD.Background
 
             // We don't want any other versions running - kill it after we have completely shown our new screen to reduce flicker
             KillPreviousInstance();
+
+            // Register a global keyboard hook to bring up the tools menu - can only do this after killing previous instances
+            try
+            {
+                _keyboardHook.KeyPressed += KeyboardHook_OnPressed;
+                _keyboardHook.RegisterHotKey(Background.ModifierKeys.Control | Background.ModifierKeys.Alt, Keys.F12);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Unable to register hotkey. Is the application already running?", Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
+            }
         }
 
         /// <summary>
@@ -372,7 +390,14 @@ namespace AutoIt.OSD.Background
             {
                 using (_formTools = new FormTools(_xmlOptions))
                 {
-                    _formTools.ShowDialog();
+                    result =_formTools.ShowDialog();
+
+                    // Check if closed via the "Close App" button 
+                    if (result == DialogResult.Abort)
+                    {
+                        // Send close message to ourselves
+                        Close();
+                    }
                 }
 
                 _formTools = null;

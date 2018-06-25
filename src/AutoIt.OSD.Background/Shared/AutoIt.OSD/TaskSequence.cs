@@ -5,6 +5,10 @@
 //
 
 using System;
+using System.CodeDom;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Windows.Forms;
 using TSEnvironmentLib;
 
 // ReSharper disable once CheckNamespace
@@ -45,6 +49,61 @@ namespace AutoIt.OSD
             catch (Exception)
             {
                 // ignored
+            }
+        }
+
+        /// <summary>
+        /// Gets a Dictionary key/value pairs of current TS variables and values.
+        /// </summary>
+        /// <returns></returns>
+        public static Dictionary<string, string> GetAllVariables()
+        {
+            var variablesDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+            try
+            {
+                ITSEnvClass tsEnvVar = new TSEnvClass();
+                var variables = tsEnvVar.GetVariables();
+
+                foreach (string variable in variables)
+                {
+                    variablesDictionary.Add(variable, tsEnvVar[variable]);
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+
+            return variablesDictionary;
+        }
+
+        /// <summary>
+        /// Tests if a given task sequence variable name usually holds a password.
+        /// </summary>
+        /// <param name="tsVariable">Name of the task sequence variable to test</param>
+        /// <returns></returns>
+        public static bool IsPasswordVariable(string tsVariable)
+        {
+            string name = tsVariable.ToUpper();
+
+            // Catch all for anything that sounds like a password variable
+            if (name.Contains("PASSWORD"))
+            {
+                return true;
+            }
+
+            // Specific variable names
+            switch (name)
+            {
+                case "_SMSTSRESERVED2-000":
+                //case "OSDJOINPASSWORD":
+                //case "OSDLOCALADMINPASSWORD":
+                //case "OSDRANDOMADMINPASSWORD":
+                    return true;
+                
+                default:
+                    return false;
             }
         }
     }

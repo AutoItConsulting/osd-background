@@ -6,7 +6,7 @@
   <Title>OSD Tools Menu</Title>
 
   <!-- Password to allow access to the tools window, leave blank for none -->
-  <Password><![CDATA[Pass]]></Password>
+  <Password><![CDATA[]]></Password>
 
   <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
   <CustomBackgroundEnabled>true</CustomBackgroundEnabled>
