@@ -69,8 +69,11 @@ namespace AutoIt.OSD.Background
         [XmlArray("Tools")] [XmlArrayItem("Tool")]
         public List<UserTool> UserToolList = new List<UserTool>();
 
-        [XmlElement("Enabled")]
-        public bool Enabled { get; set; }
+        [XmlElement("EnabledAdmin")]
+        public bool EnabledAdmin { get; set; }
+
+        [XmlElement("EnabledUser")]
+        public bool EnabledUser { get; set; }
     }
 
     public class UserTool

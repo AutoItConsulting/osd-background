@@ -247,31 +247,32 @@ namespace AutoIt.OSD.Background
             // Set main icon
             Icon = Resources.main;
 
-            _userToolsEnabled = _xmlOptions.UserTools.Enabled;
+            _userToolsEnabled = (_xmlOptions.UserTools.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
+                                (_xmlOptions.UserTools.EnabledUser && _passwordMode == PasswordMode.User);
             _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
             _taskSequenceVariablesReadOnly = _xmlOptions.TaskSequenceVariables.ReadOnly;
-
-            // Populate filtered tools list depending on access level
-            var filteredTools = new List<UserTool>();
-
-            foreach (UserTool tool in _xmlOptions.UserTools.UserToolList)
-            {
-                if (tool.AdminOnly)
-                {
-                    if (_passwordMode == PasswordMode.Admin)
-                    {
-                        filteredTools.Add(tool);
-                    }
-                }
-                else
-                {
-                    filteredTools.Add(tool);
-                }
-            }
 
             // Showing the tools tab?
             if (_userToolsEnabled)
             {
+                // Populate filtered tools list depending on access level
+                var filteredTools = new List<UserTool>();
+
+                foreach (UserTool tool in _xmlOptions.UserTools.UserToolList)
+                {
+                    if (tool.AdminOnly)
+                    {
+                        if (_passwordMode == PasswordMode.Admin)
+                        {
+                            filteredTools.Add(tool);
+                        }
+                    }
+                    else
+                    {
+                        filteredTools.Add(tool);
+                    }
+                }
+
                 listBoxUserTools.DataSource = filteredTools;
                 listBoxUserTools.DisplayMember = "Name";
 

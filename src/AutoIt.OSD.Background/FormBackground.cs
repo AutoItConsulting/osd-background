@@ -311,7 +311,7 @@ namespace AutoIt.OSD.Background
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
                 _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
-                _userToolsEnabled = _xmlOptions.UserTools.Enabled;
+                _userToolsEnabled = _xmlOptions.UserTools.EnabledAdmin | _xmlOptions.UserTools.EnabledUser;
                 _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
 
                 _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;

@@ -10,6 +10,7 @@
   <PasswordAdmin><![CDATA[Admin]]></PasswordAdmin>
   <PasswordUser><![CDATA[User]]></PasswordUser>
 
+
   <!-- Custom background options -->
   <CustomBackground>
 
@@ -42,11 +43,25 @@
 
   </CustomBackground>
 
+
+  <!-- Read and write task sequence variables -->
+  <TaskSequenceVariables>
+    
+    <!-- Set to true to enable the tab -->
+    <Enabled>true</Enabled>
+    
+    <!-- Set to true to make the tab read only -->
+    <ReadOnly>false</ReadOnly>
+
+  </TaskSequenceVariables>
+
+
   <!-- User defined cmd lines and tools to run -->
   <UserTools>
 
-    <!-- Set to true to enable the user tools tab -->
-    <Enabled>true</Enabled>
+    <!-- Set to true to enable the user tools tab for Admin and User levels -->
+    <EnabledAdmin>true</EnabledAdmin>
+    <EnabledUser>true</EnabledUser>
 
     <!-- List of tools -->
     <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
@@ -71,9 +86,33 @@
       </Tool>
 
       <Tool>
-        <AdminOnly>false</AdminOnly>
+        <AdminOnly>true</AdminOnly>
         <Name>Task Manager</Name>
         <Program>taskmgr.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>Services</Name>
+        <Program>%windir%\system32\services.msc</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+      
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>Event Viewer</Name>
+        <Program>%windir%\system32\eventvwr.msc</Program>
+        <Arguments>/s</Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>System Information</Name>
+        <Program>%windir%\system32\msinfo32.exe</Program>
         <Arguments></Arguments>
         <WorkingDirectory></WorkingDirectory>
       </Tool>
@@ -81,16 +120,5 @@
     </Tools>
 
   </UserTools>
-
-  <!-- Read and write task sequence variables -->
-  <TaskSequenceVariables>
-    
-    <!-- Set to true to enable the tab -->
-    <Enabled>true</Enabled>
-    
-    <!-- Set to true to make the tab read only -->
-    <ReadOnly>false</ReadOnly>
-
-  </TaskSequenceVariables>
 
 </Options>
