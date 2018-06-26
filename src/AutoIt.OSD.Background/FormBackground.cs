@@ -312,7 +312,7 @@ namespace AutoIt.OSD.Background
 
                 _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
                 _userToolsEnabled = _xmlOptions.UserTools.EnabledAdmin | _xmlOptions.UserTools.EnabledUser;
-                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
+                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.EnabledAdmin || _xmlOptions.TaskSequenceVariables.EnabledUser;
 
                 _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;
                 _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
@@ -332,9 +332,10 @@ namespace AutoIt.OSD.Background
                     _progressBarEnabled = false;
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                MessageBox.Show(Resources.UnableToParseXml, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string message = Resources.UnableToParseXml + "\n\n" + e.InnerException.Message;
+                MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 

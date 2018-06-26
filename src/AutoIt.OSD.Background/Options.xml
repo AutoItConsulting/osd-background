@@ -3,7 +3,7 @@
 <Options>
 
   <!-- Title of the user interface window -->
-  <Title>OSD Tools Menu</Title>
+  <Title>OSD Debug Tools</Title>
 
   <!-- Password to allow access to the tools window, leave blank for none -->
   <!-- Two passwords, one for admin level access and one for user/engineer-->
@@ -47,11 +47,12 @@
   <!-- Read and write task sequence variables -->
   <TaskSequenceVariables>
     
-    <!-- Set to true to enable the tab -->
-    <Enabled>true</Enabled>
+    <!-- Set to true to enable the tab for Admin and User levels -->
+    <EnabledAdmin>true</EnabledAdmin>
+    <EnabledUser>true</EnabledUser>
     
-    <!-- Set to true to make the tab read only -->
-    <ReadOnly>false</ReadOnly>
+    <!-- Set to true to allow editing of variables, only applies to admin mode, always read only in user mode -->
+    <AllowEdit>true</AllowEdit>
 
   </TaskSequenceVariables>
 

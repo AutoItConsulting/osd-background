@@ -102,10 +102,13 @@ namespace AutoIt.OSD.Background
 
     public class OsdTaskSequenceVariables
     {
-        [XmlElement("Enabled")]
-        public bool Enabled { get; set; }
+        [XmlElement("EnabledAdmin")]
+        public bool EnabledAdmin { get; set; }
 
-        [XmlElement("ReadOnly")]
-        public bool ReadOnly { get; set; }
+        [XmlElement("EnabledUser")]
+        public bool EnabledUser { get; set; }
+
+        [XmlElement("AllowEdit")]
+        public bool AllowEdit { get; set; }
     }
 }

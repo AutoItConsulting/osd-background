@@ -24,7 +24,7 @@ namespace AutoIt.OSD.Background
         private readonly Options _xmlOptions;
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         private bool _taskSequenceVariablesEnabled;
-        private bool _taskSequenceVariablesReadOnly;
+        private bool _taskSequenceVariablesAllowEdit;
         private bool _userToolsEnabled;
         private PasswordMode _passwordMode;
 
@@ -249,8 +249,11 @@ namespace AutoIt.OSD.Background
 
             _userToolsEnabled = (_xmlOptions.UserTools.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
                                 (_xmlOptions.UserTools.EnabledUser && _passwordMode == PasswordMode.User);
-            _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
-            _taskSequenceVariablesReadOnly = _xmlOptions.TaskSequenceVariables.ReadOnly;
+
+            _taskSequenceVariablesEnabled = (_xmlOptions.TaskSequenceVariables.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
+                                            (_xmlOptions.TaskSequenceVariables.EnabledUser && _passwordMode == PasswordMode.User);
+
+            _taskSequenceVariablesAllowEdit = _xmlOptions.TaskSequenceVariables.EnabledAdmin && _xmlOptions.TaskSequenceVariables.AllowEdit && _passwordMode == PasswordMode.Admin;
 
             // Showing the tools tab?
             if (_userToolsEnabled)
@@ -288,7 +291,15 @@ namespace AutoIt.OSD.Background
             }
 
             // Showing the task sequence?
-            if (_taskSequenceVariablesEnabled == false)
+            if (_taskSequenceVariablesEnabled)
+            {
+                // Are we entirely read only?
+                if (!_taskSequenceVariablesAllowEdit)
+                {
+                    dgvTaskSequenceVariables.ReadOnly = true;
+                }
+            }
+            else
             {
                 tabControl.TabPages.Remove(tabVariables);
             }
@@ -369,7 +380,7 @@ namespace AutoIt.OSD.Background
                         }
 
                         // Make readonly variables readonly rows
-                        if (_taskSequenceVariablesReadOnly || kvp.Key.StartsWith("_"))
+                        if (!_taskSequenceVariablesAllowEdit || kvp.Key.StartsWith("_"))
                         {
                             row.ReadOnly = true;
                             row.DefaultCellStyle = _rowStyleReadOnly;
