@@ -5,10 +5,7 @@
 //
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Windows.Forms;
 using ProgressUILib;
 using TSEnvironmentLib;
 
@@ -17,6 +14,48 @@ namespace AutoIt.OSD
 {
     public class TaskSequence
     {
+        /// <summary>
+        ///     Hides the task sequence progress UI dialog
+        /// </summary>
+        public static void CloseProgressDialog()
+        {
+            try
+            {
+                IProgressUI progressUI = new ProgressUI();
+                progressUI.CloseProgressDialog();
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        }
+
+        /// <summary>
+        ///     Gets a Dictionary key/value pairs of current TS variables and values.
+        /// </summary>
+        /// <returns></returns>
+        public static Dictionary<string, string> GetAllVariables()
+        {
+            var variablesDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+            try
+            {
+                ITSEnvClass tsEnvVar = new TSEnvClass();
+                dynamic variables = tsEnvVar.GetVariables();
+
+                foreach (string variable in variables)
+                {
+                    variablesDictionary.Add(variable, tsEnvVar[variable]);
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+
+            return variablesDictionary;
+        }
+
         /// <summary>
         ///     If running from a Task Sequence returns the tsVariable,
         /// </summary>
@@ -32,6 +71,36 @@ namespace AutoIt.OSD
             catch (Exception)
             {
                 return string.Empty;
+            }
+        }
+
+        /// <summary>
+        ///     Tests if a given task sequence variable name usually holds a password.
+        /// </summary>
+        /// <param name="tsVariable">Name of the task sequence variable to test</param>
+        /// <returns></returns>
+        public static bool IsPasswordVariable(string tsVariable)
+        {
+            string name = tsVariable.ToUpper();
+
+            // Catch all for anything that sounds like a password variable
+            if (name.Contains("PASSWORD"))
+            {
+                return true;
+            }
+
+            // Specific variable names
+            switch (name)
+            {
+                case "_SMSTSRESERVED2-000":
+
+                    //case "OSDJOINPASSWORD":
+                    //case "OSDLOCALADMINPASSWORD":
+                    //case "OSDRANDOMADMINPASSWORD":
+                    return true;
+
+                default:
+                    return false;
             }
         }
 
@@ -54,59 +123,17 @@ namespace AutoIt.OSD
         }
 
         /// <summary>
-        /// Gets a Dictionary key/value pairs of current TS variables and values.
+        ///     Show the task sequence dialog with default values.
         /// </summary>
-        /// <returns></returns>
-        public static Dictionary<string, string> GetAllVariables()
+        public static void ShowTsProgress()
         {
-            var variablesDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-
-            try
-            {
-                ITSEnvClass tsEnvVar = new TSEnvClass();
-                var variables = tsEnvVar.GetVariables();
-
-                foreach (string variable in variables)
-                {
-                    variablesDictionary.Add(variable, tsEnvVar[variable]);
-                }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            return variablesDictionary;
+            ShowTsProgress(null, null, null, null);
         }
 
         /// <summary>
-        /// Hides the task sequence progress UI dialog
+        ///     Show the task sequence dialog. Use null to indicate default values.
         /// </summary>
-        public static void CloseProgressDialog()
-        {
-            try
-            {
-                IProgressUI progressUI = new ProgressUI();
-                progressUI.CloseProgressDialog();
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-        }
-
-        /// <summary>
-        /// Show the task sequence dialog with default values.
-        /// </summary>
-        public static void ShowTSProgress()
-        {
-            ShowTSProgress(null, null, null, null);
-        }
-
-        /// <summary>
-        /// Show the task sequence dialog. Use null to indicate default values.
-        /// </summary>
-        public static void ShowTSProgress(string orgName, string tsName, string customTitle, string curAction)
+        public static void ShowTsProgress(string orgName, string tsName, string customTitle, string curAction)
         {
             try
             {
@@ -114,10 +141,10 @@ namespace AutoIt.OSD
                 ITSEnvClass tsEnvVar = new TSEnvClass();
 
                 orgName = orgName == null ? tsEnvVar["_SMSTSOrgName"] : orgName;
-                tsName = tsName == null ?  tsEnvVar["SMSTSPackageName"] : tsName;
+                tsName = tsName == null ? tsEnvVar["SMSTSPackageName"] : tsName;
                 customTitle = customTitle == null ? tsEnvVar["_SMSTSCustomProgressDialogMessage"] : customTitle;
                 curAction = curAction == null ? tsEnvVar["_SMSTSCurrentActionName"] : curAction;
-                
+
                 uint uStep = Convert.ToUInt32(tsEnvVar["_SMSTSNextInstructionPointer"]);
                 uint uMaxStep = Convert.ToUInt32(tsEnvVar["_SMSTSInstructionTableSize"]);
                 progressUI.ShowTSProgress(orgName, tsName, customTitle, curAction, uStep, uMaxStep);
@@ -125,35 +152,6 @@ namespace AutoIt.OSD
             catch (Exception)
             {
                 // ignored
-            }
-        }
-
-        /// <summary>
-        /// Tests if a given task sequence variable name usually holds a password.
-        /// </summary>
-        /// <param name="tsVariable">Name of the task sequence variable to test</param>
-        /// <returns></returns>
-        public static bool IsPasswordVariable(string tsVariable)
-        {
-            string name = tsVariable.ToUpper();
-
-            // Catch all for anything that sounds like a password variable
-            if (name.Contains("PASSWORD"))
-            {
-                return true;
-            }
-
-            // Specific variable names
-            switch (name)
-            {
-                case "_SMSTSRESERVED2-000":
-                //case "OSDJOINPASSWORD":
-                //case "OSDLOCALADMINPASSWORD":
-                //case "OSDRANDOMADMINPASSWORD":
-                    return true;
-                
-                default:
-                    return false;
             }
         }
     }

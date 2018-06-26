@@ -26,12 +26,13 @@ namespace AutoIt.OSD.Background
         private bool _taskSequenceVariablesEnabled;
         private bool _taskSequenceVariablesAllowEdit;
         private bool _userToolsEnabled;
-        private PasswordMode _passwordMode;
+        private readonly PasswordMode _passwordMode;
 
         /// <summary>
         ///     Constructor.
         /// </summary>
         /// <param name="xmlOptions"></param>
+        /// <param name="passwordMode"></param>
         public FormTools(Options xmlOptions, PasswordMode passwordMode)
         {
             _xmlOptions = xmlOptions;

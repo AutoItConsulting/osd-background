@@ -28,7 +28,7 @@ namespace AutoIt.OSD.Background
 
         private FormTools _formTools;
 
-        private KeyboardHook _keyboardHook = new KeyboardHook();
+        private readonly KeyboardHook _keyboardHook = new KeyboardHook();
         private Color _progressBarBackColor;
         private DockStyle _progressBarDock;
 
@@ -46,7 +46,7 @@ namespace AutoIt.OSD.Background
         private string _wallpaperPath = string.Empty;
         private Options _xmlOptions;
 
-        private bool _showingPasswordOrTools = false;
+        private bool _showingPasswordOrTools;
 
         /// <inheritdoc />
         public FormBackground()
@@ -334,7 +334,13 @@ namespace AutoIt.OSD.Background
             }
             catch (Exception e)
             {
-                string message = Resources.UnableToParseXml + "\n\n" + e.InnerException.Message;
+                string message = Resources.UnableToParseXml;
+
+                if (e.InnerException != null)
+                {
+                    message += "\n\n" + e.InnerException.Message;
+                }
+
                 MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
@@ -373,8 +379,7 @@ namespace AutoIt.OSD.Background
             TaskSequence.CloseProgressDialog();
 
             // Ask for password if needed
-            PasswordMode passwordMode = PasswordMode.None;
-            DialogResult result;
+            PasswordMode passwordMode;
 
             using (FormPassword formPassword = new FormPassword(_xmlOptions))
             {
@@ -386,7 +391,7 @@ namespace AutoIt.OSD.Background
             if (passwordMode != PasswordMode.None)
             {
                 _formTools = new FormTools(_xmlOptions, passwordMode);
-                result = _formTools.ShowDialog();
+                DialogResult result = _formTools.ShowDialog();
                 _formTools.Dispose();
                 _formTools = null;
 
@@ -395,7 +400,7 @@ namespace AutoIt.OSD.Background
                 {
                     // Send close message to ourselves
                     Close();
-                    TaskSequence.ShowTSProgress();
+                    TaskSequence.ShowTsProgress();
                     _showingPasswordOrTools = false;
                     return;
                 }
@@ -411,7 +416,7 @@ namespace AutoIt.OSD.Background
             BringToFrontOfWindowsSetupProgress();
 
             // Reshow TS progress
-            TaskSequence.ShowTSProgress();
+            TaskSequence.ShowTsProgress();
 
             _showingPasswordOrTools = false;
         }
