@@ -37,9 +37,10 @@
             // buttonPasswordOK
             // 
             this.buttonPasswordOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.buttonPasswordOK.Location = new System.Drawing.Point(298, 13);
+            this.buttonPasswordOK.Location = new System.Drawing.Point(348, 16);
+            this.buttonPasswordOK.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.buttonPasswordOK.Name = "buttonPasswordOK";
-            this.buttonPasswordOK.Size = new System.Drawing.Size(75, 23);
+            this.buttonPasswordOK.Size = new System.Drawing.Size(87, 28);
             this.buttonPasswordOK.TabIndex = 2;
             this.buttonPasswordOK.Text = "OK";
             this.buttonPasswordOK.UseVisualStyleBackColor = true;
@@ -48,9 +49,10 @@
             // buttonPasswordCancel
             // 
             this.buttonPasswordCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.buttonPasswordCancel.Location = new System.Drawing.Point(297, 43);
+            this.buttonPasswordCancel.Location = new System.Drawing.Point(348, 52);
+            this.buttonPasswordCancel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.buttonPasswordCancel.Name = "buttonPasswordCancel";
-            this.buttonPasswordCancel.Size = new System.Drawing.Size(75, 23);
+            this.buttonPasswordCancel.Size = new System.Drawing.Size(87, 28);
             this.buttonPasswordCancel.TabIndex = 3;
             this.buttonPasswordCancel.Text = "Cancel";
             this.buttonPasswordCancel.UseVisualStyleBackColor = true;
@@ -58,34 +60,37 @@
             // 
             // textBoxPassword
             // 
-            this.textBoxPassword.Location = new System.Drawing.Point(13, 29);
+            this.textBoxPassword.Location = new System.Drawing.Point(15, 36);
+            this.textBoxPassword.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.textBoxPassword.Name = "textBoxPassword";
             this.textBoxPassword.PasswordChar = '*';
-            this.textBoxPassword.Size = new System.Drawing.Size(279, 20);
+            this.textBoxPassword.Size = new System.Drawing.Size(325, 23);
             this.textBoxPassword.TabIndex = 1;
             // 
             // labelPassword
             // 
             this.labelPassword.AutoSize = true;
-            this.labelPassword.Location = new System.Drawing.Point(13, 10);
+            this.labelPassword.Location = new System.Drawing.Point(12, 16);
             this.labelPassword.Name = "labelPassword";
-            this.labelPassword.Size = new System.Drawing.Size(56, 13);
+            this.labelPassword.Size = new System.Drawing.Size(68, 16);
             this.labelPassword.TabIndex = 0;
             this.labelPassword.Text = "Password:";
             // 
             // FormPassword
             // 
             this.AcceptButton = this.buttonPasswordOK;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.buttonPasswordCancel;
-            this.ClientSize = new System.Drawing.Size(385, 82);
+            this.ClientSize = new System.Drawing.Size(449, 96);
             this.ControlBox = false;
             this.Controls.Add(this.labelPassword);
             this.Controls.Add(this.textBoxPassword);
             this.Controls.Add(this.buttonPasswordCancel);
             this.Controls.Add(this.buttonPasswordOK);
+            this.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "FormPassword";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "FormPassword";
