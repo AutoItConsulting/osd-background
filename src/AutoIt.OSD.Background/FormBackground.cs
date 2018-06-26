@@ -383,7 +383,7 @@ namespace AutoIt.OSD.Background
 
             using (FormPassword formPassword = new FormPassword(_xmlOptions))
             {
-                formPassword.ShowDialog();
+                formPassword.ShowDialog(this);
                 passwordMode = formPassword.PasswordMode;
             }
 
@@ -391,7 +391,7 @@ namespace AutoIt.OSD.Background
             if (passwordMode != PasswordMode.None)
             {
                 _formTools = new FormTools(_xmlOptions, passwordMode);
-                DialogResult result = _formTools.ShowDialog();
+                DialogResult result = _formTools.ShowDialog(this);
                 _formTools.Dispose();
                 _formTools = null;
 
