@@ -1,10 +1,10 @@
 	
 '-----------------------------------------------------------------------------
 ' ScriptName:	OSD_SetPhase.vbs
-' Date:			23/01/18
+' Date:			26/06/18
 ' Author:		Jonathan Bennett <jon@autoitconsulting.com>
 ' Purpose:		Launches BGinfo to customize the desktop and then ensure it is visible on Windows 7 / 8 / 10.
-' Usage:			cscript.exe OSD_SetPhase.vbs "Installing Something"  (Use the phrase "ERROR: xxxx" to show the Error.jpg bitmap")
+' Usage:		cscript.exe OSD_SetPhase.vbs "Installing Something"  (Use the phrase "ERROR: xxxx" to show the Error.jpg bitmap")
 '-----------------------------------------------------------------------------
 Option Explicit
 
@@ -24,7 +24,11 @@ Dim g_bTaskSequenceRunning : g_bTaskSequenceRunning = False
 On Error Resume Next
 Dim g_oTSEnv : Set g_oTSEnv = CreateObject("Microsoft.SMS.TSEnvironment")
 If Err.Number = 0 Then 
-	g_bTaskSequenceRunning = True
+	' May succeed because of a failed Task Sequence or bad clean-up of COM objects.
+	' Double check by reading the Task Sequence type, if its blank - not in a Task Sequence
+	If g_oTSEnv("_SMSTSType") <> "" Then 
+		g_bTaskSequenceRunning = True
+	End If	
 End If
 On Error Goto 0
 
