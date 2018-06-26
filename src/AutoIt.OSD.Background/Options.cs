@@ -12,14 +12,17 @@ namespace AutoIt.OSD.Background
     [XmlRoot("Options")]
     public class Options
     {
-        [XmlElement("Title")]
-        public string Title { get; set; }
+        [XmlElement("PasswordAdmin")]
+        public string PasswordAdmin { get; set; }
 
-        [XmlElement("Password")]
-        public string Password { get; set; }
+        [XmlElement("PasswordUser")]
+        public string PasswordUser { get; set; }
 
         [XmlElement("CustomBackground")]
         public OsdCustomBackground CustomBackground { get; set; }
+
+        [XmlElement("Title")]
+        public string Title { get; set; }
 
         [XmlElement("UserTools")]
         public UserTools UserTools { get; set; }
@@ -31,7 +34,7 @@ namespace AutoIt.OSD.Background
     public class OsdCustomBackground
     {
         [XmlElement("Enabled")]
-        public string Enabled { get; set; }
+        public bool Enabled { get; set; }
 
         [XmlElement("ImageFile")]
         public string ImageFile { get; set; }
@@ -43,7 +46,7 @@ namespace AutoIt.OSD.Background
     public class OsdProgressBar
     {
         [XmlElement("Enabled")]
-        public string Enabled { get; set; }
+        public bool Enabled { get; set; }
 
         [XmlElement("ForeColor")]
         public string ForeColor { get; set; }
@@ -67,11 +70,20 @@ namespace AutoIt.OSD.Background
         public List<UserTool> UserToolList = new List<UserTool>();
 
         [XmlElement("Enabled")]
-        public string Enabled { get; set; }
+        public bool Enabled { get; set; }
     }
 
     public class UserTool
     {
+        public UserTool()
+        {
+            // Set defaults
+            AdminOnly = true;
+        }
+
+        [XmlElement("AdminOnly")]
+        public bool AdminOnly { get; set; }
+
         [XmlElement("Name")]
         public string Name { get; set; }
 
@@ -88,9 +100,9 @@ namespace AutoIt.OSD.Background
     public class OsdTaskSequenceVariables
     {
         [XmlElement("Enabled")]
-        public string Enabled { get; set; }
+        public bool Enabled { get; set; }
 
         [XmlElement("ReadOnly")]
-        public string ReadOnly { get; set; }
+        public bool ReadOnly { get; set; }
     }
 }

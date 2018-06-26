@@ -20,20 +20,22 @@ namespace AutoIt.OSD.Background
     public partial class FormTools : Form
     {
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
-        private DataGridViewCellStyle _rowStyleReadOnly;
+        private readonly DataGridViewCellStyle _rowStyleReadOnly;
+        private readonly Options _xmlOptions;
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-        private bool _userToolsEnabled;
         private bool _taskSequenceVariablesEnabled;
         private bool _taskSequenceVariablesReadOnly;
-        private Options _xmlOptions;
+        private bool _userToolsEnabled;
+        private PasswordMode _passwordMode;
 
         /// <summary>
         ///     Constructor.
         /// </summary>
         /// <param name="xmlOptions"></param>
-        public FormTools(Options xmlOptions)
+        public FormTools(Options xmlOptions, PasswordMode passwordMode)
         {
             _xmlOptions = xmlOptions;
+            _passwordMode = passwordMode;
 
             InitializeComponent();
 
@@ -42,27 +44,6 @@ namespace AutoIt.OSD.Background
             {
                 Font = new Font(dgvTaskSequenceVariables.Font, FontStyle.Italic)
             };
-        }
-
-        /// <summary>
-        ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">String is not a valid bool.</exception>
-        private static bool ConvertStringToBool(string input)
-        {
-            if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
-            {
-                return true;
-            }
-
-            if (input.ToUpper() == "FALSE" || input.ToUpper() == "OFF" || input == "0")
-            {
-                return false;
-            }
-
-            throw new ArgumentException();
         }
 
         /// <summary>
@@ -266,23 +247,32 @@ namespace AutoIt.OSD.Background
             // Set main icon
             Icon = Resources.main;
 
-            try
+            _userToolsEnabled = _xmlOptions.UserTools.Enabled;
+            _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
+            _taskSequenceVariablesReadOnly = _xmlOptions.TaskSequenceVariables.ReadOnly;
+
+            // Populate filtered tools list depending on access level
+            var filteredTools = new List<UserTool>();
+
+            foreach (UserTool tool in _xmlOptions.UserTools.UserToolList)
             {
-                _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
-                _taskSequenceVariablesEnabled = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.Enabled);
-                _taskSequenceVariablesReadOnly = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.ReadOnly);
-            }
-            catch (Exception)
-            {
-                MessageBox.Show(Resources.UnableToParseXml, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                DialogResult = DialogResult.Abort;
-                Close();
+                if (tool.AdminOnly)
+                {
+                    if (_passwordMode == PasswordMode.Admin)
+                    {
+                        filteredTools.Add(tool);
+                    }
+                }
+                else
+                {
+                    filteredTools.Add(tool);
+                }
             }
 
             // Showing the tools tab?
             if (_userToolsEnabled)
             {
-                listBoxUserTools.DataSource = _xmlOptions.UserTools.UserToolList;
+                listBoxUserTools.DataSource = filteredTools;
                 listBoxUserTools.DisplayMember = "Name";
 
                 listBoxUserTools.Select();

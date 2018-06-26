@@ -6,7 +6,9 @@
   <Title>OSD Tools Menu</Title>
 
   <!-- Password to allow access to the tools window, leave blank for none -->
-  <Password><![CDATA[]]></Password>
+  <!-- Two passwords, one for admin level access and one for user/engineer-->
+  <PasswordAdmin><![CDATA[Admin]]></PasswordAdmin>
+  <PasswordUser><![CDATA[User]]></PasswordUser>
 
   <!-- Custom background options -->
   <CustomBackground>
@@ -49,9 +51,11 @@
     <!-- List of tools -->
     <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
     <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
+    <!-- Set AdminOnly to true to only show the tool if an Admin level password was used -->
     <Tools>
 
       <Tool>
+        <AdminOnly>true</AdminOnly>
         <Name>Command Prompt</Name>
         <Program>cmd.exe</Program>
         <Arguments></Arguments>
@@ -59,6 +63,7 @@
       </Tool>
 
       <Tool>
+        <AdminOnly>true</AdminOnly>
         <Name>Registry Editor</Name>
         <Program>regedit.exe</Program>
         <Arguments></Arguments>
@@ -66,6 +71,7 @@
       </Tool>
 
       <Tool>
+        <AdminOnly>false</AdminOnly>
         <Name>Task Manager</Name>
         <Program>taskmgr.exe</Program>
         <Arguments></Arguments>

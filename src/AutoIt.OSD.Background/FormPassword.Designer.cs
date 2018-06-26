@@ -54,6 +54,7 @@
             this.buttonPasswordCancel.TabIndex = 3;
             this.buttonPasswordCancel.Text = "Cancel";
             this.buttonPasswordCancel.UseVisualStyleBackColor = true;
+            this.buttonPasswordCancel.Click += new System.EventHandler(this.buttonPasswordCancel_Click);
             // 
             // textBoxPassword
             // 

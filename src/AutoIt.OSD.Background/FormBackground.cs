@@ -25,10 +25,8 @@ namespace AutoIt.OSD.Background
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
         private bool _customBackgroundEnabled;
-        private bool _userToolsEnabled;
-        private bool _taskSequenceVariablesEnabled;
 
-        private Form _formTools;
+        private FormTools _formTools;
 
         private KeyboardHook _keyboardHook = new KeyboardHook();
         private Color _progressBarBackColor;
@@ -40,11 +38,15 @@ namespace AutoIt.OSD.Background
         private int _progressBarOffset;
 
         private bool _startedInTaskSequence;
+        private bool _taskSequenceVariablesEnabled;
+        private bool _userToolsEnabled;
 
         private DateTime _wallpaperLastModified;
 
         private string _wallpaperPath = string.Empty;
         private Options _xmlOptions;
+
+        private bool _showingPasswordOrTools = false;
 
         /// <inheritdoc />
         public FormBackground()
@@ -90,27 +92,6 @@ namespace AutoIt.OSD.Background
 
             // Major = 6
             return Environment.OSVersion.Version.Minor >= 2;
-        }
-
-        /// <summary>
-        ///     Converts TRUE/FALSE/1/0/ON/OFF strings to a bool
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">String is not a valid bool.</exception>
-        private static bool ConvertStringToBool(string input)
-        {
-            if (input.ToUpper() == "TRUE" || input.ToUpper() == "ON" || input == "1")
-            {
-                return true;
-            }
-
-            if (input.ToUpper() == "FALSE" || input.ToUpper() == "OFF" || input == "0")
-            {
-                return false;
-            }
-
-            throw new ArgumentException("Invalid string input for conversion to bool.");
         }
 
         /// <summary>
@@ -329,11 +310,11 @@ namespace AutoIt.OSD.Background
                 TextReader reader = new StreamReader(optionsFilename);
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
 
-                _customBackgroundEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.Enabled);
-                _userToolsEnabled = ConvertStringToBool(_xmlOptions.UserTools.Enabled);
-                _taskSequenceVariablesEnabled = ConvertStringToBool(_xmlOptions.TaskSequenceVariables.Enabled);
+                _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
+                _userToolsEnabled = _xmlOptions.UserTools.Enabled;
+                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.Enabled;
 
-                _progressBarEnabled = ConvertStringToBool(_xmlOptions.CustomBackground.ProgressBar.Enabled);
+                _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;
                 _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
                 _progressBarOffset = _xmlOptions.CustomBackground.ProgressBar.Offset;
                 _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBar.Dock, true);
@@ -368,7 +349,7 @@ namespace AutoIt.OSD.Background
         private void KeyboardHook_OnPressed(object sender, KeyPressedEventArgs e)
         {
             // Ignore if already showing the tools form
-            if (_formTools != null)
+            if (_showingPasswordOrTools)
             {
                 return;
             }
@@ -378,6 +359,8 @@ namespace AutoIt.OSD.Background
             {
                 return;
             }
+
+            _showingPasswordOrTools = true;
 
             // Hide the background window because it causes issues when the user clicks on it
             if (_customBackgroundEnabled)
@@ -389,20 +372,20 @@ namespace AutoIt.OSD.Background
             TaskSequence.CloseProgressDialog();
 
             // Ask for password if needed
-            var result = DialogResult.OK;
-            if (!string.IsNullOrEmpty(_xmlOptions.Password))
+            PasswordMode passwordMode = PasswordMode.None;
+            DialogResult result;
+
+            using (FormPassword formPassword = new FormPassword(_xmlOptions))
             {
-                using (Form formPassword = new FormPassword(_xmlOptions))
-                {
-                    result = formPassword.ShowDialog();
-                }
+                formPassword.ShowDialog();
+                passwordMode = formPassword.PasswordMode;
             }
 
             // If password is ok, launch the tools
-            if (result == DialogResult.OK)
+            if (passwordMode != PasswordMode.None)
             {
-                _formTools = new FormTools(_xmlOptions);
-                result =_formTools.ShowDialog();
+                _formTools = new FormTools(_xmlOptions, passwordMode);
+                result = _formTools.ShowDialog();
                 _formTools.Dispose();
                 _formTools = null;
 
@@ -412,6 +395,7 @@ namespace AutoIt.OSD.Background
                     // Send close message to ourselves
                     Close();
                     TaskSequence.ShowTSProgress();
+                    _showingPasswordOrTools = false;
                     return;
                 }
             }
@@ -427,6 +411,8 @@ namespace AutoIt.OSD.Background
 
             // Reshow TS progress
             TaskSequence.ShowTSProgress();
+
+            _showingPasswordOrTools = false;
         }
 
         /// <summary>
