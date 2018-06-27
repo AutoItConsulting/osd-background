@@ -24,11 +24,11 @@ namespace AutoIt.OSD.Background
         private const int RefreshInervalSecs = 1;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
+        private readonly KeyboardHook _keyboardHook = new KeyboardHook();
+
         private bool _customBackgroundEnabled;
 
         private FormTools _formTools;
-
-        private readonly KeyboardHook _keyboardHook = new KeyboardHook();
         private Color _progressBarBackColor;
         private DockStyle _progressBarDock;
 
@@ -46,8 +46,6 @@ namespace AutoIt.OSD.Background
         private string _wallpaperPath = string.Empty;
         private Options _xmlOptions;
 
-        private bool _showingPasswordOrTools;
-
         /// <inheritdoc />
         public FormBackground()
         {
@@ -61,10 +59,14 @@ namespace AutoIt.OSD.Background
             pictureBoxBackground.SizeMode = PictureBoxSizeMode.StretchImage;
         }
 
+        public bool QuitSignalRequested { get; set; }
+
         /// <summary>
         ///     We don't want this window to activate when it is shown
         /// </summary>
         protected override bool ShowWithoutActivation => true;
+
+        private bool ShowingPasswordOrTools { get; set; }
 
         /// <summary>
         ///     Check if this is Windows 8 or later. Requires an OS manifest to work correctly.
@@ -176,6 +178,7 @@ namespace AutoIt.OSD.Background
         /// <param name="e"></param>
         private void FormBackground_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // Stop timer
             timerRefresh.Stop();
 
             // Remove static events
@@ -183,6 +186,9 @@ namespace AutoIt.OSD.Background
 
             // Dispose keyboard hook
             _keyboardHook.Dispose();
+
+            // Flag quit signal in case any other is mid execution. Timer is stopped so it won't trigger another close.
+            QuitSignalRequested = true;
         }
 
         /// <summary>
@@ -355,8 +361,14 @@ namespace AutoIt.OSD.Background
         /// <param name="e"></param>
         private void KeyboardHook_OnPressed(object sender, KeyPressedEventArgs e)
         {
+            // Ignore if quit in progress
+            if (QuitSignalRequested)
+            {
+                return;
+            }
+
             // Ignore if already showing the tools form
-            if (_showingPasswordOrTools)
+            if (ShowingPasswordOrTools)
             {
                 return;
             }
@@ -367,7 +379,7 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
-            _showingPasswordOrTools = true;
+            ShowingPasswordOrTools = true;
 
             // Hide the background window because it causes issues when the user clicks on it
             if (_customBackgroundEnabled)
@@ -381,7 +393,7 @@ namespace AutoIt.OSD.Background
             // Ask for password if needed
             PasswordMode passwordMode;
 
-            using (FormPassword formPassword = new FormPassword(_xmlOptions))
+            using (var formPassword = new FormPassword(_xmlOptions))
             {
                 formPassword.ShowDialog(this);
                 passwordMode = formPassword.PasswordMode;
@@ -398,11 +410,8 @@ namespace AutoIt.OSD.Background
                 // Check if closed via the "Close App" button 
                 if (result == DialogResult.Abort)
                 {
-                    // Send close message to ourselves
-                    Close();
-                    TaskSequence.ShowTsProgress();
-                    _showingPasswordOrTools = false;
-                    return;
+                    // Queue the quit signal
+                    QuitSignalRequested = true;
                 }
             }
 
@@ -418,7 +427,7 @@ namespace AutoIt.OSD.Background
             // Reshow TS progress
             TaskSequence.ShowTsProgress();
 
-            _showingPasswordOrTools = false;
+            ShowingPasswordOrTools = false;
         }
 
         /// <summary>
@@ -548,9 +557,9 @@ namespace AutoIt.OSD.Background
             StartPosition = FormStartPosition.Manual;
             Location = Screen.PrimaryScreen.Bounds.Location;
 
+            WindowState = FormWindowState.Maximized;
             // Don't use Maximized as it goes over the task bar which can be ugly
-            //WindowState = FormWindowState.Maximized;
-            Size = new Size(Screen.GetWorkingArea(this).Width, Screen.GetWorkingArea(this).Height);
+            //Size = new Size(Screen.GetWorkingArea(this).Width, Screen.GetWorkingArea(this).Height);
 
             try
             {
@@ -596,7 +605,7 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Called on interval to update bitmap and variables.
+        ///     Called on interval to update bitmap and variables and check for quit signals
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -605,11 +614,24 @@ namespace AutoIt.OSD.Background
             // Stop time while we process
             timerRefresh.Stop();
 
-            // Update the background image if it's changed
-            RefreshBackgroundImage();
+            // If the password/tools menu is not showing, do background update checks and progress bar status
+            if (!ShowingPasswordOrTools)
+            {
+                // Update the background image if it's changed
+                RefreshBackgroundImage();
 
-            // Update overall progress bar
-            ProgressBarRefresh();
+                // Update overall progress bar
+                ProgressBarRefresh();
+
+                // Is quit signalled? We only check it when tools not showing to prevent another instance loading
+                // and closing our app while using the tools menu
+                if (QuitSignalRequested)
+                {
+                    // Close form, and don't restart timer
+                    QuitSignalRequested = false;
+                    Close();
+                }
+            }
 
             // Restart timer
             timerRefresh.Start();
