@@ -9,8 +9,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -22,23 +25,27 @@ namespace AutoIt.OSD.Background
 {
     public partial class FormBackground : Form
     {
-        private const string PipeName = "PIPE_AUTOIT_OSD_BACKGROUND";
         private const string MutexName = "MUTEX_AUTOIT_OSD_BACKGROUND";
-
-        /// <summary>
-        /// Signal for the thread to close.
-        /// </summary>
-        private readonly ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
-
+        private const string PipeName = "PIPE_AUTOIT_OSD_BACKGROUND";
 
         private const int RefreshInervalSecs = 1;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
         private readonly KeyboardHook _keyboardHook = new KeyboardHook();
 
+        /// <summary>
+        ///     Signal for the thread to close.
+        /// </summary>
+        private readonly ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+
+        private Mutex _applicationMutex;
+
         private bool _customBackgroundEnabled;
 
         private FormTools _formTools;
+
+        private IAsyncResult _namedPipeAsyncResult;
+        private NamedPipeServerStream _namedPipeServerStream;
         private Color _progressBarBackColor;
         private DockStyle _progressBarDock;
 
@@ -49,6 +56,7 @@ namespace AutoIt.OSD.Background
 
         private bool _startedInTaskSequence;
         private bool _taskSequenceVariablesEnabled;
+        private Thread _thread;
         private bool _userToolsEnabled;
 
         private DateTime _wallpaperLastModified;
@@ -199,6 +207,15 @@ namespace AutoIt.OSD.Background
 
             // Flag quit signal in case any thread is mid execution. Timer is stopped so it won't trigger another Close() call.
             _shutdownEvent.Set();
+
+            // Give the server thread time to stop before foricbly terminating it
+            if (_thread != null && !_thread.Join(5000))
+            {
+                _thread.Abort();
+            }
+
+            // Close our mutex
+            _applicationMutex.Close();
         }
 
         /// <summary>
@@ -211,8 +228,18 @@ namespace AutoIt.OSD.Background
             Text = AppDomain.CurrentDomain.FriendlyName;
 
             // Read in options file if specified
-            if (!GetOptions())
+            if (!OptionsReadXmlOptionsFile())
             {
+                DialogResult = DialogResult.Cancel;
+                Close();
+                return;
+            }
+
+            // If are not the first instance then send a message to the running app with the new options and quit
+            if (!IsApplicationFirstInstance())
+            {
+                NamedPipeClientSendOptions(_xmlOptions);
+
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return;
@@ -245,6 +272,13 @@ namespace AutoIt.OSD.Background
 
             // By default assume not in a task sequence
             _startedInTaskSequence = false;
+
+            // Create a new background thread and start it
+            _thread = new Thread(NamedPipeServerThreadFunc)
+            {
+                IsBackground = true
+            };
+            _thread.Start();
         }
 
         /// <summary>
@@ -285,83 +319,14 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Processes command line options and options.xml
+        ///     Checks if this is the first instance of this application. If not, sends the command line paramters to the existing
+        ///     instance.
         /// </summary>
         /// <returns></returns>
-        private bool GetOptions()
+        private bool IsApplicationFirstInstance()
         {
-            string[] arguments = Environment.GetCommandLineArgs();
-            string optionsFilename = string.Empty;
-
-            if (arguments.Length >= 2)
-            {
-                string arg = arguments[1].ToUpper();
-
-                if (arg == "/?" || arg == "?")
-                {
-                    var usage = @"AutoIt.OSD.Background [/Close] | [Options.xml]";
-                    MessageBox.Show(usage, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return false;
-                }
-
-                if (arg == "/CLOSE" || arg == "CLOSE")
-                {
-                    KillPreviousInstance();
-                    return false;
-                }
-
-                // Get the options filename
-                optionsFilename = arguments[1];
-            }
-
-            // If no filename specified, use options.xml in current folder
-            if (arguments.Length == 1)
-            {
-                optionsFilename = _appPath + @"\Options.xml";
-            }
-
-            try
-            {
-                var deSerializer = new XmlSerializer(typeof(Options));
-                TextReader reader = new StreamReader(optionsFilename);
-                _xmlOptions = (Options)deSerializer.Deserialize(reader);
-
-                _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
-                _userToolsEnabled = _xmlOptions.UserTools.EnabledAdmin | _xmlOptions.UserTools.EnabledUser;
-                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.EnabledAdmin || _xmlOptions.TaskSequenceVariables.EnabledUser;
-
-                _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;
-                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
-                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBar.Offset;
-                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBar.Dock, true);
-                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.ForeColor);
-                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.BackColor);
-
-                if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
-                {
-                    return false;
-                }
-
-                // Can't have progress if no background
-                if (!_customBackgroundEnabled)
-                {
-                    _progressBarEnabled = false;
-                }
-            }
-            catch (Exception e)
-            {
-                string message = Resources.UnableToParseXml;
-
-                if (e.InnerException != null)
-                {
-                    message += "\n\n" + e.InnerException.Message;
-                }
-
-                MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
-            return true;
+            _applicationMutex = new Mutex(true, MutexName, out bool firstInstance);
+            return firstInstance;
         }
 
         /// <summary>
@@ -438,6 +403,224 @@ namespace AutoIt.OSD.Background
             TaskSequence.ShowTsProgress();
 
             ShowingPasswordOrTools = false;
+        }
+
+        private void NamedPipeClientSendOptions(Options xmlOptions)
+        {
+            // Send the commandline arguments
+            //List<string> arguments = Environment.GetCommandLineArgs().ToList();
+
+            try
+            {
+                using (var namedPipeClientStream = new NamedPipeClientStream(".", PipeName, PipeDirection.Out))
+                {
+                    namedPipeClientStream.Connect(10000); // Maximum wait 10 seconds
+
+                    var xmlSerializer = new XmlSerializer(typeof(Options));
+                    xmlSerializer.Serialize(namedPipeClientStream, xmlOptions);
+                }
+            }
+            catch (Exception)
+            {
+                // Error connecting or sending
+            }
+        }
+
+        /// <summary>
+        ///     The function called when a client connects.
+        /// </summary>
+        /// <param name="iAsyncResult"></param>
+        private void NamedPipeServerConnectionCallback(IAsyncResult iAsyncResult)
+        {
+            try
+            {
+                // End waiting for the connection
+                _namedPipeServerStream.EndWaitForConnection(_namedPipeAsyncResult);
+
+                // Read data from client
+                //var fmt = new BinaryFormatter();
+                //var arguments = (List<string>)fmt.Deserialize(_pipeServer);
+
+                var xmlSerializer = new XmlSerializer(typeof(Options));
+                var xmlOptions = (Options)xmlSerializer.Deserialize(_namedPipeServerStream);
+
+                // TODO: Store data received and do something with it
+                //
+            }
+            catch (ObjectDisposedException)
+            {
+                // EndWaitForConnection will exception when someone calls .Close() before a connection received
+                // In that case we dont create any more pipes and just return
+                // This will happen when app is closing and our pipe is closed
+                return;
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+            finally
+            {
+                // Close the original server (we have to create a new one each time)
+                if (_namedPipeServerStream != null)
+                {
+                    _namedPipeServerStream.Dispose();
+                    _namedPipeServerStream = null;
+                }
+
+                _namedPipeAsyncResult = null;
+            }
+
+            // Create a new pipe for next connection
+            NamedPipeServerCreateServer();
+        }
+
+        /// <summary>
+        ///     Starts a new pipe server if one isn't already active.
+        /// </summary>
+        private void NamedPipeServerCreateServer()
+        {
+            if (_namedPipeServerStream != null)
+            {
+                // Already a pipe setup, just return
+                return;
+            }
+
+            // Create a new pipe accessible by local authenticated users
+            //var sidAuthUsers = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+            var sidNetworkService = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
+            var sidWorld = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+
+            var pipeSecurity = new PipeSecurity();
+
+            // Deny network access to the pipe
+            var accessRule = new PipeAccessRule(sidNetworkService, PipeAccessRights.ReadWrite, AccessControlType.Deny);
+            pipeSecurity.AddAccessRule(accessRule);
+
+            // Alow Everyone to read/write
+            accessRule = new PipeAccessRule(sidWorld, PipeAccessRights.ReadWrite, AccessControlType.Allow);
+            pipeSecurity.AddAccessRule(accessRule);
+
+            // This user is the owner (can create pipes)
+            SecurityIdentifier sidOwner = WindowsIdentity.GetCurrent().Owner;
+            if (sidOwner != null)
+            {
+                accessRule = new PipeAccessRule(sidOwner, PipeAccessRights.FullControl, AccessControlType.Allow);
+                pipeSecurity.AddAccessRule(accessRule);
+            }
+
+            // Create pipe and start the async connection wait
+            _namedPipeServerStream = new NamedPipeServerStream(
+                PipeName,
+                PipeDirection.In,
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous,
+                0,
+                0,
+                pipeSecurity);
+
+            _namedPipeAsyncResult = _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
+        }
+
+        /// <summary>
+        ///     The main worker thread. This runs until the service stops.
+        /// </summary>
+        private void NamedPipeServerThreadFunc()
+        {
+            // Create a new pipe 
+            NamedPipeServerCreateServer();
+
+            // Wait until we get asked to shutdown
+            _shutdownEvent.WaitOne();
+
+            // Close pipe if it's currently waiting
+            if (_namedPipeServerStream != null)
+            {
+                _namedPipeServerStream.Dispose();
+                _namedPipeServerStream = null;
+
+                _namedPipeAsyncResult = null;
+            }
+        }
+
+        /// <summary>
+        ///     Processes command line options and options.xml
+        /// </summary>
+        /// <returns></returns>
+        private bool OptionsReadXmlOptionsFile()
+        {
+            string[] arguments = Environment.GetCommandLineArgs();
+            string optionsFilename = string.Empty;
+
+            if (arguments.Length >= 2)
+            {
+                string arg = arguments[1].ToUpper();
+
+                if (arg == "/?" || arg == "?")
+                {
+                    var usage = @"AutoIt.OSD.Background [/Close] | [Options.xml]";
+                    MessageBox.Show(usage, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+
+                if (arg == "/CLOSE" || arg == "CLOSE")
+                {
+                    KillPreviousInstance();
+                    return false;
+                }
+
+                // Get the options filename
+                optionsFilename = arguments[1];
+            }
+
+            // If no filename specified, use options.xml in current folder
+            if (arguments.Length == 1)
+            {
+                optionsFilename = _appPath + @"\Options.xml";
+            }
+
+            try
+            {
+                var deSerializer = new XmlSerializer(typeof(Options));
+                TextReader reader = new StreamReader(optionsFilename);
+                _xmlOptions = (Options)deSerializer.Deserialize(reader);
+
+                _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
+                _userToolsEnabled = _xmlOptions.UserTools.EnabledAdmin | _xmlOptions.UserTools.EnabledUser;
+                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.EnabledAdmin || _xmlOptions.TaskSequenceVariables.EnabledUser;
+
+                _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;
+                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
+                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBar.Offset;
+                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBar.Dock, true);
+                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.ForeColor);
+                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.BackColor);
+
+                if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
+                {
+                    return false;
+                }
+
+                // Can't have progress if no background
+                if (!_customBackgroundEnabled)
+                {
+                    _progressBarEnabled = false;
+                }
+            }
+            catch (Exception e)
+            {
+                string message = Resources.UnableToParseXml;
+
+                if (e.InnerException != null)
+                {
+                    message += "\n\n" + e.InnerException.Message;
+                }
+
+                MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -568,6 +751,7 @@ namespace AutoIt.OSD.Background
             Location = Screen.PrimaryScreen.Bounds.Location;
 
             WindowState = FormWindowState.Maximized;
+
             // Don't use Maximized as it goes over the task bar which can be ugly
             //Size = new Size(Screen.GetWorkingArea(this).Width, Screen.GetWorkingArea(this).Height);
 

@@ -19,8 +19,20 @@ namespace AutoIt.OSD.Background
             {
                 _shutdownEvent.Dispose();
                 _keyboardHook.Dispose();
+
+                if (_namedPipeServerStream != null)
+                {
+                    _namedPipeServerStream.Dispose();
+                }
+
+                if (_applicationMutex != null)
+                {
+                    _applicationMutex.Dispose();
+                }
+
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 

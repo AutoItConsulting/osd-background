@@ -98,6 +98,11 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("WorkingDirectory")]
         public string WorkingDirectory { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 
     public class OsdTaskSequenceVariables
