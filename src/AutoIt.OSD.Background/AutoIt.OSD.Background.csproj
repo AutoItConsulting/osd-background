@@ -181,9 +181,6 @@
     <Content Include="Example\Error.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Example\Options.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Example\OSD_SetPhase.vbs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

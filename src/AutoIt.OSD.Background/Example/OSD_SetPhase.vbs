@@ -8,9 +8,6 @@
 '-----------------------------------------------------------------------------
 Option Explicit
 
-' Set this to True if your WinPE boot image has .NET support and AutoIt.OSD.Background.exe works correctly there
-Const DotNetInWinPE = False
-
 Const WinStyleMinimizedInactive = 7
 Const WinStyleNormal = 1
 Const WinStyleHidden = 0
@@ -32,16 +29,14 @@ If Err.Number = 0 Then
 End If
 On Error Goto 0
 
-Dim sBGInfoText
-
 ' Get arguments
+Dim sBGInfoText
 Dim oArgs : Set oArgs = WScript.Arguments
 If oArgs.Count >= 1 Then
 	sBGInfoText = oArgs(0)
 End If
 
 Dim sBgi : sBgi = "Default.bgi"
-
 If InStr(UCase(sBGInfoText), "ERROR:") > 0 Then
 	sBgi = "Error.bgi"
 End If
@@ -67,16 +62,8 @@ Else
 End If
 On Error Goto 0
 
-' We run differently depending on if we are in WinPE as we can't really assume that .NET is present.
-Dim bInWinPE
-If UCase(GetTSVariable("_SMSTSInWinPE")) = "TRUE" Then
-	bInWinPE = True
-Else	
-	bInWinPE = False
-End If
-
-' Run our custom OSD background exe?
-If bInWinPE = False Or (bInWinPE = True And DotNetInWinPE = True) Then
+' Run our custom OSD background exe? Needs .NET 4 or later
+If IsDotNet4Or45Installed() Then
 	On Error Resume Next			
 	g_oShell.Run "AutoIt.OSD.Background.exe Options.xml", WinStyleNormal, False
 	On Error Goto 0
@@ -91,6 +78,36 @@ Function GetTSVariable(ByVal sVar)
 	If g_bTaskSequenceRunning = True Then
 		GetTSVariable = g_oTSEnv(sVar)
 	End If
+End Function
+
+'----------------------------------------------------
+	
+Function IsDotNet4Or45Installed()
+	
+	If ReadFromRegistry("HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0\Full\Version", "") <> "" Then
+		IsDotNet4Or45Installed = True
+	ElseIf ReadFromRegistry("HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4.0\Client\Version", "") <> "" Then
+		IsDotNet4Or45Installed = True
+	ElseIf ReadFromRegistry("HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\Version", "") <> "" Then
+		IsDotNet4Or45Installed = True
+	Else
+		IsDotNet4Or45Installed = False
+	End If
+	
+End Function
+	
+'----------------------------------------------------
+
+Function ReadFromRegistry (ByVal strRegistryKey, ByVal strDefault )
+	On Error Resume Next
+	
+	Dim val : val = g_oShell.RegRead( strRegistryKey )
+	if err.number <> 0 then
+	
+		ReadFromRegistry = strDefault
+	else
+		ReadFromRegistry = val
+	end if
 End Function
 
 '----------------------------------------------------
