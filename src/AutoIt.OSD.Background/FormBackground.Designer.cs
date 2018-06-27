@@ -17,6 +17,7 @@ namespace AutoIt.OSD.Background
         {
             if (disposing && (components != null))
             {
+                _shutdownEvent.Dispose();
                 _keyboardHook.Dispose();
                 components.Dispose();
             }

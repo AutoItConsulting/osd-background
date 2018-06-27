@@ -11,6 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using AutoIt.OSD.Background.Properties;
@@ -21,6 +22,15 @@ namespace AutoIt.OSD.Background
 {
     public partial class FormBackground : Form
     {
+        private const string PipeName = "PIPE_AUTOIT_OSD_BACKGROUND";
+        private const string MutexName = "MUTEX_AUTOIT_OSD_BACKGROUND";
+
+        /// <summary>
+        /// Signal for the thread to close.
+        /// </summary>
+        private readonly ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+
+
         private const int RefreshInervalSecs = 1;
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
@@ -59,7 +69,7 @@ namespace AutoIt.OSD.Background
             pictureBoxBackground.SizeMode = PictureBoxSizeMode.StretchImage;
         }
 
-        public bool QuitSignalRequested { get; set; }
+        //public bool QuitSignalRequested { get; set; }
 
         /// <summary>
         ///     We don't want this window to activate when it is shown
@@ -187,8 +197,8 @@ namespace AutoIt.OSD.Background
             // Dispose keyboard hook
             _keyboardHook.Dispose();
 
-            // Flag quit signal in case any other is mid execution. Timer is stopped so it won't trigger another close.
-            QuitSignalRequested = true;
+            // Flag quit signal in case any thread is mid execution. Timer is stopped so it won't trigger another Close() call.
+            _shutdownEvent.Set();
         }
 
         /// <summary>
@@ -362,7 +372,7 @@ namespace AutoIt.OSD.Background
         private void KeyboardHook_OnPressed(object sender, KeyPressedEventArgs e)
         {
             // Ignore if quit in progress
-            if (QuitSignalRequested)
+            if (_shutdownEvent.WaitOne(0))
             {
                 return;
             }
@@ -411,7 +421,7 @@ namespace AutoIt.OSD.Background
                 if (result == DialogResult.Abort)
                 {
                     // Queue the quit signal
-                    QuitSignalRequested = true;
+                    _shutdownEvent.Set();
                 }
             }
 
@@ -625,10 +635,9 @@ namespace AutoIt.OSD.Background
 
                 // Is quit signalled? We only check it when tools not showing to prevent another instance loading
                 // and closing our app while using the tools menu
-                if (QuitSignalRequested)
+                if (_shutdownEvent.WaitOne(0))
                 {
                     // Close form, and don't restart timer
-                    QuitSignalRequested = false;
                     Close();
                 }
             }
