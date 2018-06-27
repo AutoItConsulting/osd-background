@@ -29,6 +29,20 @@ namespace AutoIt.OSD.Background
 
         [XmlElement("TaskSequenceVariables")]
         public OsdTaskSequenceVariables TaskSequenceVariables { get; set; }
+
+        /// <summary>
+        ///     Runs a check of the data in a fully populated Options object to fix the values so they make sense. If the values
+        ///     are too broken it will exception.
+        /// </summary>
+        /// <returns></returns>
+        public void SanityCheck()
+        {
+            // Can't have progress bar if no background
+            if (!CustomBackground.Enabled)
+            {
+                CustomBackground.ProgressBar.Enabled = false;
+            }
+        }
     }
 
     public class OsdCustomBackground

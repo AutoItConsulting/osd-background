@@ -42,6 +42,8 @@ namespace AutoIt.OSD.Background
 
         private bool _customBackgroundEnabled;
 
+        private bool _firstApplicationInstance;
+
         private FormTools _formTools;
 
         private IAsyncResult _namedPipeAsyncResult;
@@ -153,6 +155,7 @@ namespace AutoIt.OSD.Background
             {
                 if (process.Id != Process.GetCurrentProcess().Id)
                 {
+                    //process.Kill();
                     process.Kill();
                     process.WaitForExit(5000);
                     break;
@@ -215,7 +218,10 @@ namespace AutoIt.OSD.Background
             }
 
             // Close our mutex
-            _applicationMutex.Close();
+            if (_applicationMutex != null)
+            {
+                _applicationMutex.Dispose();
+            }
         }
 
         /// <summary>
@@ -228,18 +234,8 @@ namespace AutoIt.OSD.Background
             Text = AppDomain.CurrentDomain.FriendlyName;
 
             // Read in options file if specified
-            if (!OptionsReadXmlOptionsFile())
+            if (!OptionsReadCommandLine())
             {
-                DialogResult = DialogResult.Cancel;
-                Close();
-                return;
-            }
-
-            // If are not the first instance then send a message to the running app with the new options and quit
-            if (!IsApplicationFirstInstance())
-            {
-                NamedPipeClientSendOptions(_xmlOptions);
-
                 DialogResult = DialogResult.Cancel;
                 Close();
                 return;
@@ -319,14 +315,18 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     Checks if this is the first instance of this application. If not, sends the command line paramters to the existing
-        ///     instance.
+        ///     Checks if this is the first instance of this application. Can be run multiple times.
         /// </summary>
         /// <returns></returns>
         private bool IsApplicationFirstInstance()
         {
-            _applicationMutex = new Mutex(true, MutexName, out bool firstInstance);
-            return firstInstance;
+            // Allow for multiple runs but only try and get the mutex once
+            if (_applicationMutex == null)
+            {
+                _applicationMutex = new Mutex(true, MutexName, out _firstApplicationInstance);
+            }
+
+            return _firstApplicationInstance;
         }
 
         /// <summary>
@@ -405,9 +405,8 @@ namespace AutoIt.OSD.Background
             ShowingPasswordOrTools = false;
         }
 
-        private void NamedPipeClientSendOptions(Options xmlOptions)
+        private void NamedPipeClientSendOptions(NamedPipeXmlPayload namedPipePayload)
         {
-            // Send the commandline arguments
             //List<string> arguments = Environment.GetCommandLineArgs().ToList();
 
             try
@@ -416,8 +415,8 @@ namespace AutoIt.OSD.Background
                 {
                     namedPipeClientStream.Connect(10000); // Maximum wait 10 seconds
 
-                    var xmlSerializer = new XmlSerializer(typeof(Options));
-                    xmlSerializer.Serialize(namedPipeClientStream, xmlOptions);
+                    var xmlSerializer = new XmlSerializer(typeof(NamedPipeXmlPayload));
+                    xmlSerializer.Serialize(namedPipeClientStream, namedPipePayload);
                 }
             }
             catch (Exception)
@@ -441,11 +440,17 @@ namespace AutoIt.OSD.Background
                 //var fmt = new BinaryFormatter();
                 //var arguments = (List<string>)fmt.Deserialize(_pipeServer);
 
-                var xmlSerializer = new XmlSerializer(typeof(Options));
-                var xmlOptions = (Options)xmlSerializer.Deserialize(_namedPipeServerStream);
+                var xmlSerializer = new XmlSerializer(typeof(NamedPipeXmlPayload));
+                var namedPipeXmlPayload = (NamedPipeXmlPayload)xmlSerializer.Deserialize(_namedPipeServerStream);
 
                 // TODO: Store data received and do something with it
-                //
+                
+                // Need to signal quit?
+                if (namedPipeXmlPayload.SignalQuit)
+                {
+                    _shutdownEvent.Set();
+                    return;
+                }
             }
             catch (ObjectDisposedException)
             {
@@ -547,7 +552,7 @@ namespace AutoIt.OSD.Background
         ///     Processes command line options and options.xml
         /// </summary>
         /// <returns></returns>
-        private bool OptionsReadXmlOptionsFile()
+        private bool OptionsReadCommandLine()
         {
             string[] arguments = Environment.GetCommandLineArgs();
             string optionsFilename = string.Empty;
@@ -565,7 +570,13 @@ namespace AutoIt.OSD.Background
 
                 if (arg == "/CLOSE" || arg == "CLOSE")
                 {
-                    KillPreviousInstance();
+                    // If we are not the first instance, send a quit message along the pipe
+                    if (!IsApplicationFirstInstance())
+                    {
+                        //KillPreviousInstance();
+                        NamedPipeClientSendOptions(new NamedPipeXmlPayload(true, new Options()));
+                    }
+
                     return false;
                 }
 
@@ -584,27 +595,61 @@ namespace AutoIt.OSD.Background
                 var deSerializer = new XmlSerializer(typeof(Options));
                 TextReader reader = new StreamReader(optionsFilename);
                 _xmlOptions = (Options)deSerializer.Deserialize(reader);
+                _xmlOptions.SanityCheck();
+            }
+            catch (Exception e)
+            {
+                string message = Resources.UnableToParseXml;
 
-                _customBackgroundEnabled = _xmlOptions.CustomBackground.Enabled;
-                _userToolsEnabled = _xmlOptions.UserTools.EnabledAdmin | _xmlOptions.UserTools.EnabledUser;
-                _taskSequenceVariablesEnabled = _xmlOptions.TaskSequenceVariables.EnabledAdmin || _xmlOptions.TaskSequenceVariables.EnabledUser;
+                if (e.InnerException != null)
+                {
+                    message += "\n\n" + e.InnerException.Message;
+                }
 
-                _progressBarEnabled = _xmlOptions.CustomBackground.ProgressBar.Enabled;
-                _progressBarHeight = _xmlOptions.CustomBackground.ProgressBar.Height;
-                _progressBarOffset = _xmlOptions.CustomBackground.ProgressBar.Offset;
-                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), _xmlOptions.CustomBackground.ProgressBar.Dock, true);
-                _progressBarForeColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.ForeColor);
-                _progressBarBackColor = ColorTranslator.FromHtml(_xmlOptions.CustomBackground.ProgressBar.BackColor);
+                MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            // Additional parsing of some string values in useful fields
+            if (!OptionsXmlOptionsObjectToFields(_xmlOptions))
+            {
+                return false;
+            }
+
+            // If are not the first instance then send a message to the running app with the new options and then quit
+            if (!IsApplicationFirstInstance())
+            {
+                NamedPipeClientSendOptions(new NamedPipeXmlPayload(false, _xmlOptions));
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Some of the strings in the xml object need parsing, this populates fields for those values
+        /// </summary>
+        /// <returns>Returns true if all fields successfully parsed and valid.</returns>
+        private bool OptionsXmlOptionsObjectToFields(Options xmlOptions)
+        {
+            // TODO: Move this logic into Options.cs
+
+            try
+            {
+                _customBackgroundEnabled = xmlOptions.CustomBackground.Enabled;
+                _userToolsEnabled = xmlOptions.UserTools.EnabledAdmin | xmlOptions.UserTools.EnabledUser;
+                _taskSequenceVariablesEnabled = xmlOptions.TaskSequenceVariables.EnabledAdmin || xmlOptions.TaskSequenceVariables.EnabledUser;
+
+                _progressBarEnabled = xmlOptions.CustomBackground.ProgressBar.Enabled;
+                _progressBarHeight = xmlOptions.CustomBackground.ProgressBar.Height;
+                _progressBarOffset = xmlOptions.CustomBackground.ProgressBar.Offset;
+                _progressBarDock = (DockStyle)Enum.Parse(typeof(DockStyle), xmlOptions.CustomBackground.ProgressBar.Dock, true);
+                _progressBarForeColor = ColorTranslator.FromHtml(xmlOptions.CustomBackground.ProgressBar.ForeColor);
+                _progressBarBackColor = ColorTranslator.FromHtml(xmlOptions.CustomBackground.ProgressBar.BackColor);
 
                 if (_progressBarDock != DockStyle.Bottom && _progressBarDock != DockStyle.Top)
                 {
-                    return false;
-                }
-
-                // Can't have progress if no background
-                if (!_customBackgroundEnabled)
-                {
-                    _progressBarEnabled = false;
+                    _progressBarDock = DockStyle.Bottom;
                 }
             }
             catch (Exception e)
