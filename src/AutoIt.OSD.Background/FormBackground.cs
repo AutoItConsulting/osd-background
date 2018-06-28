@@ -371,6 +371,7 @@ namespace AutoIt.OSD.Background
             // Hide the background window because it causes issues when the user clicks on it
             if (_customBackgroundEnabled)
             {
+                Activate();
                 BringToFront();
                 Hide();
             }
@@ -383,7 +384,7 @@ namespace AutoIt.OSD.Background
 
             using (var formPassword = new FormPassword(_options))
             {
-                formPassword.ShowDialog(this);
+                formPassword.ShowDialog();
                 passwordMode = formPassword.PasswordMode;
             }
 
@@ -645,6 +646,7 @@ namespace AutoIt.OSD.Background
                 {
                     SignalQuit = false,
                     OsdBackgroundDir = _osdBackgroundDir,
+                    OsdBackgroundWorkingDir = Directory.GetCurrentDirectory(),
                     Options = _options
                 };
 

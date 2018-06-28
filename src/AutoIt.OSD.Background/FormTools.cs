@@ -19,7 +19,6 @@ namespace AutoIt.OSD.Background
 {
     public partial class FormTools : Form
     {
-        private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
         private readonly DataGridViewCellStyle _rowStyleReadOnly;
         private readonly Options _options;
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
