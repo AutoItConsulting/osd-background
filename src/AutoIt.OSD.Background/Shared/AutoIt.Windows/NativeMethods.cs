@@ -12,63 +12,63 @@ using System.Text;
 
 namespace AutoIt.Windows
 {
-    public static class NativeMethods
+    internal static class NativeMethods
     {
-        public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
-        public const uint SWP_NOSIZE = 0x0001;
-        public const uint SWP_NOMOVE = 0x0002;
-        public const uint SWP_NOACTIVATE = 0x0010;
+        internal static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+        internal const uint SWP_NOSIZE = 0x0001;
+        internal const uint SWP_NOMOVE = 0x0002;
+        internal const uint SWP_NOACTIVATE = 0x0010;
 
-        public const int WM_GETTEXT = 0x000D;
-        public const int WM_GETTEXTLENGTH = 0x000E;
+        internal const int WM_GETTEXT = 0x000D;
+        internal const int WM_GETTEXTLENGTH = 0x000E;
 
-        public const int SW_HIDE = 0;
-        public const int SW_SHOWNORMAL = 1;
-        public const int SW_SHOWMINIMIZED = 2;
-        public const int SW_SHOWMAXIMIZED = 3;
-        public const int SW_SHOWNOACTIVATE = 4;
-        public const int SW_RESTORE = 9;
-        public const int SW_SHOWDEFAULT = 10;
+        internal const int SW_HIDE = 0;
+        internal const int SW_SHOWNORMAL = 1;
+        internal const int SW_SHOWMINIMIZED = 2;
+        internal const int SW_SHOWMAXIMIZED = 3;
+        internal const int SW_SHOWNOACTIVATE = 4;
+        internal const int SW_RESTORE = 9;
+        internal const int SW_SHOWDEFAULT = 10;
 
         [DllImport("user32.dll")]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+        internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        internal static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
         [DllImport("user32.dll")]
-        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         [DllImport("user32.dll")]
-        public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+        internal static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
 
-        public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+        internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [DllImport("user32.dll")]
-        public static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
+        internal static extern bool EnumWindows(EnumWindowsProc enumProc, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr SetParent(IntPtr child, IntPtr newParent);
-
-        [DllImport("User32")]
-        public static extern IntPtr GetTopWindow(IntPtr hWnd);
-
-        [DllImport("User32")]
-        public static extern IntPtr GetNextWindow(IntPtr hWnd, uint wCmd);
+        internal static extern IntPtr SetParent(IntPtr child, IntPtr newParent);
 
         [DllImport("User32.dll")]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        internal static extern IntPtr GetTopWindow(IntPtr hWnd);
+
+        [DllImport("User32.dll")]
+        internal static extern IntPtr GetWindow(IntPtr hWnd, uint wCmd);
+
+        [DllImport("User32.dll")]
+        internal static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         [DllImport("User32.dll", CharSet = CharSet.Unicode)]
-        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
+        internal static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, StringBuilder lParam);
 
         [DllImport("User32.Dll", CharSet = CharSet.Unicode)]
-        public static extern void GetClassName(IntPtr hWnd, StringBuilder s, int nMaxCount);
+        internal static extern void GetClassName(IntPtr hWnd, StringBuilder s, int nMaxCount);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern int GetWindowText(IntPtr hWnd, StringBuilder strText, int maxCount);
+        internal static extern int GetWindowText(IntPtr hWnd, StringBuilder strText, int maxCount);
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern int GetWindowTextLength(IntPtr hWnd);
+        internal static extern int GetWindowTextLength(IntPtr hWnd);
     }
 }

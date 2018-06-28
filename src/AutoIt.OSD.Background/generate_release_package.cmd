@@ -17,11 +17,12 @@ if exist "%SIGNTOOL%" goto OK1
 
 "%SIGNTOOL%" sign /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 /fd SHA256 /n "AutoIt Consulting Ltd" /q "%ScriptDir%\AutoIt.OSD.Background.exe"
 
-
 REM Clean up
 ECHO %RootOutDir%
 rmdir /s /q %RootOutDir%
 
 robocopy "%ScriptDir%" "%RootOutDir%" /mir /xf "%ThisScript%" /xf *.pdb
 copy "%ScriptDir%\AutoIt.OSD.Background.exe" "%RootOutDir%\Example" /y 
-exit /b 0
+copy "%ScriptDir%\Options.xml" "%RootOutDir%\Example" /y 
+
+cmd /c "exit /b 0"

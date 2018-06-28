@@ -1,21 +1,133 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <Options>
 
-  <!-- Show progress bar for current task sequence progress -->
-  <ProgressBarEnabled>true</ProgressBarEnabled>
+  <!-- Title of the user interface window -->
+  <Title>OSD Debug Tools</Title>
 
-  <!-- The color of the progress bar in HTML/RGB format: #RRGGBB -->
-  <ProgressBarForeColor>#5D83AC</ProgressBarForeColor>
-  <ProgressBarBackColor>#FFFFFF</ProgressBarBackColor>
+  <!-- Password to allow access to the tools window, leave blank for none -->
+  <!-- Two passwords, one for admin level access and one for user/engineer-->
+  <PasswordAdmin><![CDATA[Admin]]></PasswordAdmin>
+  <PasswordUser><![CDATA[User]]></PasswordUser>
 
-  <!-- Location of the progress bar. Top or Bottom -->
-  <ProgressBarDock>Bottom</ProgressBarDock>
-  
-  <!-- Offset in pixels from the Top or Bottom of the screen -->
-  <ProgressBarOffset>0</ProgressBarOffset>
-  
-  <!-- Height of the progress bar -->
-  <ProgressBarHeight>5</ProgressBarHeight>
+
+  <!-- Custom background options -->
+  <CustomBackground>
+
+    <!-- Uses a screen size form that copies the user wallaper. Keeps it in front of Setup is preparing your computer for first use -->
+    <Enabled>true</Enabled>
+
+    <!-- Not yet implemented. Path to a jpeg/PNG/bitmap. If blank uses current wallpaper -->
+    <ImageFile></ImageFile>
+
+    <!-- Look and feel of progress bar -->
+    <ProgressBar>
+
+      <!-- Show progress bar for current task sequence progress. -->
+      <Enabled>true</Enabled>
+
+      <!-- The color of the progress bar in HTML/RGB format: #RRGGBB -->
+      <ForeColor>#5D83AC</ForeColor>
+      <BackColor>#FFFFFF</BackColor>
+
+      <!-- Location of the progress bar. Top or Bottom -->
+      <Dock>Bottom</Dock>
+
+      <!-- Offset in pixels from the Top or Bottom of the screen -->
+      <Offset>0</Offset>
+
+      <!-- Height of the progress bar -->
+      <Height>8</Height>
+
+    </ProgressBar>
+
+  </CustomBackground>
+
+
+  <!-- Read and write task sequence variables -->
+  <TaskSequenceVariables>
+    
+    <!-- Set to true to enable the tab for Admin and User levels -->
+    <EnabledAdmin>true</EnabledAdmin>
+    <EnabledUser>true</EnabledUser>
+    
+    <!-- Set to true to allow editing of variables, only applies to admin mode, always read only in user mode -->
+    <AllowEdit>true</AllowEdit>
+
+  </TaskSequenceVariables>
+
+
+  <!-- User defined cmd lines and tools to run -->
+  <UserTools>
+
+    <!-- Set to true to enable the user tools tab for Admin and User levels -->
+    <EnabledAdmin>true</EnabledAdmin>
+    <EnabledUser>true</EnabledUser>
+
+    <!-- List of tools -->
+    <!-- Can use environment variables in CommandLine, Arguments and WorkingDirectory -->
+    <!-- %OSDBackgroundDir% represents the directory AutoIt.OSD.Background.exe is launched from -->
+    <!-- Set AdminOnly to true to only show the tool if an Admin level password was used -->
+    <Tools>
+
+      <Tool>
+        <AdminOnly>true</AdminOnly>
+        <Name>Command Prompt</Name>
+        <Program>cmd.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory>%OSDBackgoundExeDir%</WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>true</AdminOnly>
+        <Name>Registry Editor</Name>
+        <Program>regedit.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>true</AdminOnly>
+        <Name>Task Manager</Name>
+        <Program>taskmgr.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>Services</Name>
+        <Program>%windir%\system32\services.msc</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+      
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>Event Viewer</Name>
+        <Program>%windir%\system32\eventvwr.msc</Program>
+        <Arguments>/s</Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>System Information</Name>
+        <Program>%windir%\system32\msinfo32.exe</Program>
+        <Arguments></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>IP Info</Name>
+        <Program>cmd.exe</Program>
+        <Arguments><![CDATA[/k ipconfig /all | more & pause & exit]]></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
+    </Tools>
+
+  </UserTools>
 
 </Options>

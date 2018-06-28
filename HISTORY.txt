@@ -1,0 +1,15 @@
+
+HISTORY
+=======
+
+v1.0.0.0 - 28th Jun 2018
+------------------------
+ - Added 2 level password option for admins and users.
+ - Added customizable user tools menu for launching command prompts, registry tools, anything!
+ - Added task sequence variables explorer and editor.
+ - Options.xml reorganized.
+ 
+
+v0.1.0.0 - 30th Jan 2018
+------------------------
+Initial release.

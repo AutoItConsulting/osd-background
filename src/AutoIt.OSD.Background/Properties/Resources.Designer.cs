@@ -19,7 +19,7 @@ namespace AutoIt.OSD.Background.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -61,12 +61,78 @@ namespace AutoIt.OSD.Background.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error launching tool.
+        ///
+        ///Exception text:
+        ///.
+        /// </summary>
+        internal static string ErrorLaunchingTool {
+            get {
+                return ResourceManager.GetString("ErrorLaunchingTool", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid Password..
+        /// </summary>
+        internal static string InvalidPassword {
+            get {
+                return ResourceManager.GetString("InvalidPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon main {
             get {
                 object obj = ResourceManager.GetObject("main", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to create variables that begin with an underscore..
+        /// </summary>
+        internal static string UnableToCreateVariabledWithUnderscore {
+            get {
+                return ResourceManager.GetString("UnableToCreateVariabledWithUnderscore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to load user wallpaper..
+        /// </summary>
+        internal static string UnableToLoadUserWallpaper {
+            get {
+                return ResourceManager.GetString("UnableToLoadUserWallpaper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to read or parse Options.xml file..
+        /// </summary>
+        internal static string UnableToParseXml {
+            get {
+                return ResourceManager.GetString("UnableToParseXml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to register hotkey. Is the application already running?.
+        /// </summary>
+        internal static string UnableToRegisterHotkey {
+            get {
+                return ResourceManager.GetString("UnableToRegisterHotkey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variable name already exists..
+        /// </summary>
+        internal static string VariableNameAlreadyExists {
+            get {
+                return ResourceManager.GetString("VariableNameAlreadyExists", resourceCulture);
             }
         }
     }

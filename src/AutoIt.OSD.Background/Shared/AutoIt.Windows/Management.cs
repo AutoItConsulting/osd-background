@@ -7,7 +7,7 @@ namespace AutoIt.Windows
 {
     public class Management
     {
-        public static IEnumerable<IntPtr> FindWindows(NativeMethods.EnumWindowsProc filter)
+        internal static IEnumerable<IntPtr> FindWindows(NativeMethods.EnumWindowsProc filter)
         {
             var windows = new List<IntPtr>();
 

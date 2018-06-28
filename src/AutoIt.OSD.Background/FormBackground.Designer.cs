@@ -17,8 +17,24 @@ namespace AutoIt.OSD.Background
         {
             if (disposing && (components != null))
             {
+                _eventShutdownRequested.Dispose();
+                _eventNewOptionsAvailable.Dispose();
+
+                _keyboardHook.Dispose();
+
+                if (_namedPipeServerStream != null)
+                {
+                    _namedPipeServerStream.Dispose();
+                }
+
+                if (_mutexApplication != null)
+                {
+                    _mutexApplication.Dispose();
+                }
+
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
@@ -33,7 +49,7 @@ namespace AutoIt.OSD.Background
             this.components = new System.ComponentModel.Container();
             this.pictureBoxBackground = new System.Windows.Forms.PictureBox();
             this.timerRefresh = new System.Windows.Forms.Timer(this.components);
-            this.progressBar = new SimpleProgressBar();
+            this.progressBar = new AutoIt.Controls.SimpleProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBackground)).BeginInit();
             this.SuspendLayout();
             // 
@@ -49,7 +65,7 @@ namespace AutoIt.OSD.Background
             // 
             // timerRefresh
             // 
-            this.timerRefresh.Tick += new System.EventHandler(this.timerRefresh_Tick);
+            this.timerRefresh.Tick += new System.EventHandler(this.TimerHandleTickEvent);
             // 
             // progressBar
             // 
