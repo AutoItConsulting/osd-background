@@ -118,6 +118,14 @@
         <WorkingDirectory></WorkingDirectory>
       </Tool>
 
+      <Tool>
+        <AdminOnly>false</AdminOnly>
+        <Name>IP Info</Name>
+        <Program>cmd.exe</Program>
+        <Arguments><![CDATA[/k ipconfig /all | more & pause & exit]]></Arguments>
+        <WorkingDirectory></WorkingDirectory>
+      </Tool>
+
     </Tools>
 
   </UserTools>
