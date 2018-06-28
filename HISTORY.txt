@@ -1,0 +1,5 @@
+AutoIt.OSD.Background is written and maintained by Jonathan Bennett <jon@autoitscript.com>.
+
+Other contributors, listed alphabetically, are:
+
+ * 
