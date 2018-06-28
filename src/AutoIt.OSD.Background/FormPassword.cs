@@ -19,11 +19,11 @@ namespace AutoIt.OSD.Background
 
     public partial class FormPassword : Form
     {
-        private readonly Options _xmlOptions;
+        private readonly Options _options;
 
-        public FormPassword(Options xmlOptions)
+        public FormPassword(Options options)
         {
-            _xmlOptions = xmlOptions;
+            _options = options;
 
             InitializeComponent();
 
@@ -36,7 +36,7 @@ namespace AutoIt.OSD.Background
         private void buttonPasswordOK_Click(object sender, EventArgs e)
         {
             // If admin password blank then return in admin mode
-            if (string.IsNullOrEmpty(_xmlOptions.PasswordAdmin))
+            if (string.IsNullOrEmpty(_options.PasswordAdmin))
             {
                 DialogResult = DialogResult.OK;
                 PasswordMode = PasswordMode.Admin;
@@ -44,7 +44,7 @@ namespace AutoIt.OSD.Background
             }
 
             // Check for admin password
-            if (_xmlOptions.PasswordAdmin == textBoxPassword.Text)
+            if (_options.PasswordAdmin == textBoxPassword.Text)
             {
                 DialogResult = DialogResult.OK;
                 PasswordMode = PasswordMode.Admin;
@@ -52,7 +52,7 @@ namespace AutoIt.OSD.Background
             }
 
             // If user password blank then return in user mode
-            if (string.IsNullOrEmpty(_xmlOptions.PasswordUser))
+            if (string.IsNullOrEmpty(_options.PasswordUser))
             {
                 DialogResult = DialogResult.OK;
                 PasswordMode = PasswordMode.User;
@@ -60,7 +60,7 @@ namespace AutoIt.OSD.Background
             }
 
             // Check for user password
-            if (_xmlOptions.PasswordUser == textBoxPassword.Text)
+            if (_options.PasswordUser == textBoxPassword.Text)
             {
                 DialogResult = DialogResult.OK;
                 PasswordMode = PasswordMode.User;
@@ -78,13 +78,13 @@ namespace AutoIt.OSD.Background
         private void FormPassword_Load(object sender, EventArgs e)
         {
             // Set title
-            Text = _xmlOptions.Title;
+            Text = _options.Title;
 
             // Set main icon
             Icon = Resources.main;
 
             // If both passwords are blank then abort showing the form
-            if (string.IsNullOrEmpty(_xmlOptions.PasswordAdmin) && string.IsNullOrEmpty(_xmlOptions.PasswordUser))
+            if (string.IsNullOrEmpty(_options.PasswordAdmin) && string.IsNullOrEmpty(_options.PasswordUser))
             {
                 DialogResult = DialogResult.Cancel;
             }

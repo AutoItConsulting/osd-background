@@ -28,29 +28,44 @@ namespace AutoIt.OSD.Background
         private const string MutexName = "MUTEX_AUTOIT_OSD_BACKGROUND";
         private const string PipeName = "PIPE_AUTOIT_OSD_BACKGROUND";
 
-        private const int RefreshInervalSecs = 1;
-        private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
-
-        private readonly KeyboardHook _keyboardHook = new KeyboardHook();
+        private const int TimerIntervalSecs = 1;
 
         /// <summary>
-        ///     Signal for the thread to close.
+        ///     Directory containing this instance of the exe
         /// </summary>
-        private readonly ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+        private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
 
-        private Mutex _applicationMutex;
+        /// <summary>
+        ///     Signal to update the options recieved from another instance.
+        /// </summary>
+        private readonly ManualResetEvent _eventNewOptionsAvailable = new ManualResetEvent(false);
 
+        /// <summary>
+        ///     Signal for the application to close.
+        /// </summary>
+        private readonly ManualResetEvent _eventShutdownRequested = new ManualResetEvent(false);
+
+        private readonly KeyboardHook _keyboardHook = new KeyboardHook();
+        private readonly object _namedPiperServerThreadLock = new object();
         private bool _customBackgroundEnabled;
 
         private bool _firstApplicationInstance;
 
         private FormTools _formTools;
 
+        private Mutex _mutexApplication;
+
         private IAsyncResult _namedPipeAsyncResult;
         private NamedPipeServerStream _namedPipeServerStream;
+        private Thread _namedPipeServerThread;
+        private NamedPipeXmlPayload _namedPipeXmlPayload;
+
+        private Options _options;
+
+        private string _osdBackgroundDir;
+
         private Color _progressBarBackColor;
         private DockStyle _progressBarDock;
-
         private bool _progressBarEnabled;
         private Color _progressBarForeColor;
         private int _progressBarHeight;
@@ -58,13 +73,10 @@ namespace AutoIt.OSD.Background
 
         private bool _startedInTaskSequence;
         private bool _taskSequenceVariablesEnabled;
-        private Thread _thread;
         private bool _userToolsEnabled;
 
         private DateTime _wallpaperLastModified;
-
         private string _wallpaperPath = string.Empty;
-        private Options _xmlOptions;
 
         /// <inheritdoc />
         public FormBackground()
@@ -77,15 +89,23 @@ namespace AutoIt.OSD.Background
             // Set these here rather than designer as it makes it easier to work with designer
             pictureBoxBackground.Dock = DockStyle.Fill;
             pictureBoxBackground.SizeMode = PictureBoxSizeMode.StretchImage;
+
+            // Store the exe dir and working dir so we can pass this info to another instance
+            _osdBackgroundDir = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
         }
 
-        //public bool QuitSignalRequested { get; set; }
+        /// <inheritdoc />
+        protected override bool ShowWithoutActivation
+        {
+            get
+            {
+                return true;
+            }
+        }
 
         /// <summary>
-        ///     We don't want this window to activate when it is shown
+        ///     Gets a value indicating if the tools menu is currently showing.
         /// </summary>
-        protected override bool ShowWithoutActivation => true;
-
         private bool ShowingPasswordOrTools { get; set; }
 
         /// <summary>
@@ -155,7 +175,6 @@ namespace AutoIt.OSD.Background
             {
                 if (process.Id != Process.GetCurrentProcess().Id)
                 {
-                    //process.Kill();
                     process.Kill();
                     process.WaitForExit(5000);
                     break;
@@ -163,6 +182,9 @@ namespace AutoIt.OSD.Background
             }
         }
 
+        /// <summary>
+        ///     Sends the Windows Setup window to the bottom, and then puts our form in front of that.
+        /// </summary>
         private void BringToFrontOfWindowsSetupProgress()
         {
             // Find the window(s) (should only be one) with the FirstUXWndClass, same on Win7/Win10
@@ -186,12 +208,6 @@ namespace AutoIt.OSD.Background
             Windows.NativeMethods.ShowWindowAsync(progressWindows[0], Windows.NativeMethods.SW_HIDE);
         }
 
-        private void FormBackground_Activated(object sender, EventArgs e)
-        {
-            //MessageBox.Show("Activated");
-            //BringToFrontOfWindowsSetupProgress();
-        }
-
         /// <summary>
         ///     Runs when form is starting to close.
         /// </summary>
@@ -209,18 +225,19 @@ namespace AutoIt.OSD.Background
             _keyboardHook.Dispose();
 
             // Flag quit signal in case any thread is mid execution. Timer is stopped so it won't trigger another Close() call.
-            _shutdownEvent.Set();
+            _eventShutdownRequested.Set();
 
             // Give the server thread time to stop before foricbly terminating it
-            if (_thread != null && !_thread.Join(5000))
+            if (_namedPipeServerThread != null && !_namedPipeServerThread.Join(5000))
             {
-                _thread.Abort();
+                _namedPipeServerThread.Abort();
             }
 
             // Close our mutex
-            if (_applicationMutex != null)
+            if (_mutexApplication != null)
             {
-                _applicationMutex.Dispose();
+                _mutexApplication.Dispose();
+                _mutexApplication = null;
             }
         }
 
@@ -234,9 +251,16 @@ namespace AutoIt.OSD.Background
             Text = AppDomain.CurrentDomain.FriendlyName;
 
             // Read in options file if specified
-            if (!OptionsReadCommandLine())
+            if (!OptionsReadCommandLineAndOptionsFile())
             {
-                DialogResult = DialogResult.Cancel;
+                Close();
+                return;
+            }
+
+            // First update of background image
+            if (RefreshBackgroundImage(true) == false)
+            {
+                MessageBox.Show(Resources.UnableToLoadUserWallpaper, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
                 return;
             }
@@ -244,17 +268,8 @@ namespace AutoIt.OSD.Background
             // Make sure picture box is bottom most control on our form
             pictureBoxBackground.SendToBack();
 
-            // First update of background image
-            if (RefreshBackgroundImage(true) == false)
-            {
-                MessageBox.Show(Resources.UnableToLoadUserWallpaper, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                DialogResult = DialogResult.Cancel;
-                Close();
-                return;
-            }
-
             // First update of progress bar
-            ProgressBarResize();
+            ProgressBarRedraw();
             ProgressBarRefresh();
 
             // Push the Win7/Win10 progress screen to the bottom, then put our form on top of that
@@ -270,11 +285,11 @@ namespace AutoIt.OSD.Background
             _startedInTaskSequence = false;
 
             // Create a new background thread and start it
-            _thread = new Thread(NamedPipeServerThreadFunc)
+            _namedPipeServerThread = new Thread(NamedPipeServerThreadFunc)
             {
                 IsBackground = true
             };
-            _thread.Start();
+            _namedPipeServerThread.Start();
         }
 
         /// <summary>
@@ -290,16 +305,13 @@ namespace AutoIt.OSD.Background
                 Refresh();
 
                 // Start the refresh timer
-                timerRefresh.Interval = (int)TimeSpan.FromSeconds(RefreshInervalSecs).TotalMilliseconds;
+                timerRefresh.Interval = (int)TimeSpan.FromSeconds(TimerIntervalSecs).TotalMilliseconds;
                 timerRefresh.Start();
             }
             else
             {
                 Hide();
             }
-
-            // We don't want any other versions running - kill it after we have completely shown our new screen to reduce flicker
-            KillPreviousInstance();
 
             // Register a global keyboard hook to bring up the tools menu - can only do this after killing previous instances
             try
@@ -321,9 +333,9 @@ namespace AutoIt.OSD.Background
         private bool IsApplicationFirstInstance()
         {
             // Allow for multiple runs but only try and get the mutex once
-            if (_applicationMutex == null)
+            if (_mutexApplication == null)
             {
-                _applicationMutex = new Mutex(true, MutexName, out _firstApplicationInstance);
+                _mutexApplication = new Mutex(true, MutexName, out _firstApplicationInstance);
             }
 
             return _firstApplicationInstance;
@@ -337,7 +349,7 @@ namespace AutoIt.OSD.Background
         private void KeyboardHook_OnPressed(object sender, KeyPressedEventArgs e)
         {
             // Ignore if quit in progress
-            if (_shutdownEvent.WaitOne(0))
+            if (_eventShutdownRequested.WaitOne(0))
             {
                 return;
             }
@@ -359,6 +371,7 @@ namespace AutoIt.OSD.Background
             // Hide the background window because it causes issues when the user clicks on it
             if (_customBackgroundEnabled)
             {
+                BringToFront();
                 Hide();
             }
 
@@ -368,7 +381,7 @@ namespace AutoIt.OSD.Background
             // Ask for password if needed
             PasswordMode passwordMode;
 
-            using (var formPassword = new FormPassword(_xmlOptions))
+            using (var formPassword = new FormPassword(_options))
             {
                 formPassword.ShowDialog(this);
                 passwordMode = formPassword.PasswordMode;
@@ -377,7 +390,7 @@ namespace AutoIt.OSD.Background
             // If password is ok, launch the tools
             if (passwordMode != PasswordMode.None)
             {
-                _formTools = new FormTools(_xmlOptions, passwordMode);
+                _formTools = new FormTools(_options, passwordMode, _osdBackgroundDir);
                 DialogResult result = _formTools.ShowDialog(this);
                 _formTools.Dispose();
                 _formTools = null;
@@ -386,7 +399,7 @@ namespace AutoIt.OSD.Background
                 if (result == DialogResult.Abort)
                 {
                     // Queue the quit signal
-                    _shutdownEvent.Set();
+                    _eventShutdownRequested.Set();
                 }
             }
 
@@ -405,6 +418,10 @@ namespace AutoIt.OSD.Background
             ShowingPasswordOrTools = false;
         }
 
+        /// <summary>
+        ///     Uses a named pipe to send the currently parsed options to an already running instance.
+        /// </summary>
+        /// <param name="namedPipePayload"></param>
         private void NamedPipeClientSendOptions(NamedPipeXmlPayload namedPipePayload)
         {
             //List<string> arguments = Environment.GetCommandLineArgs().ToList();
@@ -413,7 +430,7 @@ namespace AutoIt.OSD.Background
             {
                 using (var namedPipeClientStream = new NamedPipeClientStream(".", PipeName, PipeDirection.Out))
                 {
-                    namedPipeClientStream.Connect(10000); // Maximum wait 10 seconds
+                    namedPipeClientStream.Connect(3000); // Maximum wait 3 seconds
 
                     var xmlSerializer = new XmlSerializer(typeof(NamedPipeXmlPayload));
                     xmlSerializer.Serialize(namedPipeClientStream, namedPipePayload);
@@ -426,7 +443,7 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     The function called when a client connects.
+        ///     The function called when a client connects to the named pipe.
         /// </summary>
         /// <param name="iAsyncResult"></param>
         private void NamedPipeServerConnectionCallback(IAsyncResult iAsyncResult)
@@ -436,20 +453,23 @@ namespace AutoIt.OSD.Background
                 // End waiting for the connection
                 _namedPipeServerStream.EndWaitForConnection(_namedPipeAsyncResult);
 
-                // Read data from client
-                //var fmt = new BinaryFormatter();
-                //var arguments = (List<string>)fmt.Deserialize(_pipeServer);
-
-                var xmlSerializer = new XmlSerializer(typeof(NamedPipeXmlPayload));
-                var namedPipeXmlPayload = (NamedPipeXmlPayload)xmlSerializer.Deserialize(_namedPipeServerStream);
-
-                // TODO: Store data received and do something with it
-                
-                // Need to signal quit?
-                if (namedPipeXmlPayload.SignalQuit)
+                // Read data and prevent access to _namedPipeXmlPayload during threaded operations
+                lock (_namedPiperServerThreadLock)
                 {
-                    _shutdownEvent.Set();
-                    return;
+                    // Read data from client
+                    var xmlSerializer = new XmlSerializer(typeof(NamedPipeXmlPayload));
+                    _namedPipeXmlPayload = (NamedPipeXmlPayload)xmlSerializer.Deserialize(_namedPipeServerStream);
+
+                    // Need to signal quit?
+                    if (_namedPipeXmlPayload.SignalQuit)
+                    {
+                        _eventShutdownRequested.Set();
+                        return;
+                    }
+
+                    // Flag that there is new options data available. It will be applied on timer event
+                    // when the tools menus are NOT open
+                    _eventNewOptionsAvailable.Set();
                 }
             }
             catch (ObjectDisposedException)
@@ -490,7 +510,7 @@ namespace AutoIt.OSD.Background
                 return;
             }
 
-            // Create a new pipe accessible by local authenticated users
+            // Create a new pipe accessible by local authenticated users, disallow network
             //var sidAuthUsers = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
             var sidNetworkService = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
             var sidWorld = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
@@ -536,15 +556,12 @@ namespace AutoIt.OSD.Background
             NamedPipeServerCreateServer();
 
             // Wait until we get asked to shutdown
-            _shutdownEvent.WaitOne();
+            _eventShutdownRequested.WaitOne();
 
             // Close pipe if it's currently waiting
             if (_namedPipeServerStream != null)
             {
                 _namedPipeServerStream.Dispose();
-                _namedPipeServerStream = null;
-
-                _namedPipeAsyncResult = null;
             }
         }
 
@@ -552,7 +569,7 @@ namespace AutoIt.OSD.Background
         ///     Processes command line options and options.xml
         /// </summary>
         /// <returns></returns>
-        private bool OptionsReadCommandLine()
+        private bool OptionsReadCommandLineAndOptionsFile()
         {
             string[] arguments = Environment.GetCommandLineArgs();
             string optionsFilename = string.Empty;
@@ -574,7 +591,12 @@ namespace AutoIt.OSD.Background
                     if (!IsApplicationFirstInstance())
                     {
                         //KillPreviousInstance();
-                        NamedPipeClientSendOptions(new NamedPipeXmlPayload(true, new Options()));
+                        var namedPipeXmlPayload = new NamedPipeXmlPayload
+                        {
+                            SignalQuit = true
+                        };
+
+                        NamedPipeClientSendOptions(namedPipeXmlPayload);
                     }
 
                     return false;
@@ -594,8 +616,8 @@ namespace AutoIt.OSD.Background
             {
                 var deSerializer = new XmlSerializer(typeof(Options));
                 TextReader reader = new StreamReader(optionsFilename);
-                _xmlOptions = (Options)deSerializer.Deserialize(reader);
-                _xmlOptions.SanityCheck();
+                _options = (Options)deSerializer.Deserialize(reader);
+                _options.SanityCheck();
             }
             catch (Exception e)
             {
@@ -611,7 +633,7 @@ namespace AutoIt.OSD.Background
             }
 
             // Additional parsing of some string values in useful fields
-            if (!OptionsXmlOptionsObjectToFields(_xmlOptions))
+            if (!OptionsXmlOptionsObjectToFields(_options))
             {
                 return false;
             }
@@ -619,7 +641,14 @@ namespace AutoIt.OSD.Background
             // If are not the first instance then send a message to the running app with the new options and then quit
             if (!IsApplicationFirstInstance())
             {
-                NamedPipeClientSendOptions(new NamedPipeXmlPayload(false, _xmlOptions));
+                var namedPipeXmlPayload = new NamedPipeXmlPayload
+                {
+                    SignalQuit = false,
+                    OsdBackgroundDir = _osdBackgroundDir,
+                    Options = _options
+                };
+
+                NamedPipeClientSendOptions(namedPipeXmlPayload);
                 return false;
             }
 
@@ -652,20 +681,52 @@ namespace AutoIt.OSD.Background
                     _progressBarDock = DockStyle.Bottom;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                string message = Resources.UnableToParseXml;
-
-                if (e.InnerException != null)
-                {
-                    message += "\n\n" + e.InnerException.Message;
-                }
-
-                MessageBox.Show(message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        ///     Fully redraws the progress bar, also handles size changes based on the screen size.
+        /// </summary>
+        private void ProgressBarRedraw()
+        {
+            if (!_progressBarEnabled)
+            {
+                return;
+            }
+
+            // Format to client size
+            progressBar.Left = ClientRectangle.Left;
+            progressBar.Width = ClientSize.Width;
+            progressBar.Height = _progressBarHeight;
+
+            if (_progressBarDock == DockStyle.Bottom)
+            {
+                progressBar.Top = ClientSize.Height - _progressBarHeight - _progressBarOffset;
+            }
+            else if (_progressBarDock == DockStyle.Top)
+            {
+                progressBar.Top = _progressBarOffset;
+            }
+
+            if (progressBar.Top < ClientRectangle.Top)
+            {
+                progressBar.Top = ClientRectangle.Top;
+            }
+            else if (progressBar.Top > ClientRectangle.Bottom)
+            {
+                progressBar.Top = ClientRectangle.Bottom;
+            }
+
+            progressBar.ForeColor = _progressBarForeColor;
+            progressBar.BackColor = _progressBarBackColor;
+
+            // Ensure in front of picture box
+            progressBar.BringToFront();
         }
 
         /// <summary>
@@ -703,7 +764,7 @@ namespace AutoIt.OSD.Background
                 // and close down - this prevents situations where the caller forgets to close us at the end of a TS
                 if (_startedInTaskSequence)
                 {
-                    Close();
+                    _eventShutdownRequested.Set();
                 }
 
                 return;
@@ -722,46 +783,6 @@ namespace AutoIt.OSD.Background
             // Set percentage and make visible
             progressBar.Value = 100 * currentInstruction / lastInstruction;
             progressBar.Visible = true;
-        }
-
-        /// <summary>
-        ///     Updates the progress bar based on the screen size.
-        /// </summary>
-        private void ProgressBarResize()
-        {
-            if (!_progressBarEnabled)
-            {
-                return;
-            }
-
-            // Format to client size
-            progressBar.Left = ClientRectangle.Left;
-            progressBar.Width = ClientSize.Width;
-            progressBar.Height = _progressBarHeight;
-
-            if (_progressBarDock == DockStyle.Bottom)
-            {
-                progressBar.Top = ClientSize.Height - _progressBarHeight - _progressBarOffset;
-            }
-            else if (_progressBarDock == DockStyle.Top)
-            {
-                progressBar.Top = _progressBarOffset;
-            }
-
-            if (progressBar.Top < ClientRectangle.Top)
-            {
-                progressBar.Top = ClientRectangle.Top;
-            }
-            else if (progressBar.Top > ClientRectangle.Bottom)
-            {
-                progressBar.Top = ClientRectangle.Bottom;
-            }
-
-            progressBar.ForeColor = _progressBarForeColor;
-            progressBar.BackColor = _progressBarBackColor;
-
-            // Ensure in front of picture box
-            progressBar.BringToFront();
         }
 
         /// <summary>
@@ -830,7 +851,7 @@ namespace AutoIt.OSD.Background
             BringToFrontOfWindowsSetupProgress();
 
             // Resize progress bar
-            ProgressBarResize();
+            ProgressBarRedraw();
         }
 
         /// <summary>
@@ -844,31 +865,66 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
+        ///     This will perform the neccessary changes based on an options change request. This is handled during a timer request
+        ///     and the timer will be paused.
+        /// </summary>
+        private void TimerHandleOptionsChangeEvent()
+        {
+            // Lock so no chance of receiving another new options file during processing
+            lock (_namedPiperServerThreadLock)
+            {
+                if (_eventNewOptionsAvailable.WaitOne(0))
+                {
+                    _eventNewOptionsAvailable.Reset();
+
+                    // Save data
+                    _osdBackgroundDir = _namedPipeXmlPayload.OsdBackgroundDir;
+                    _options = _namedPipeXmlPayload.Options;
+
+                    // Change fields based on updated options data
+                    OptionsXmlOptionsObjectToFields(_options);
+
+                    // Change the working dir to match the last AutoIt.OSDBackground.exe that was run
+                    Directory.SetCurrentDirectory(_namedPipeXmlPayload.OsdBackgroundWorkingDir);
+
+                    // Redraw the background and progress bar (size and/or color might have new options)
+                    RefreshBackgroundImage(true);
+                    ProgressBarRedraw();
+                }
+            }
+        }
+
+        /// <summary>
         ///     Called on interval to update bitmap and variables and check for quit signals
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void timerRefresh_Tick(object sender, EventArgs e)
+        private void TimerHandleTickEvent(object sender, EventArgs e)
         {
+            // If the tools menu is showing then don't do anything (ignores quit signals, new options until tools closed)
+            if (ShowingPasswordOrTools)
+            {
+                return;
+            }
+
             // Stop time while we process
             timerRefresh.Stop();
 
-            // If the password/tools menu is not showing, do background update checks and progress bar status
-            if (!ShowingPasswordOrTools)
+            // Has a new options file been received?  If so handle it.
+            TimerHandleOptionsChangeEvent();
+
+            // Update the background image if it's changed
+            RefreshBackgroundImage();
+
+            // Update overall progress bar percentage
+            ProgressBarRefresh();
+
+            // Is quit signalled? We only check it when tools not showing to prevent another instance loading
+            // and closing our app while using the tools menu
+            if (_eventShutdownRequested.WaitOne(0))
             {
-                // Update the background image if it's changed
-                RefreshBackgroundImage();
-
-                // Update overall progress bar
-                ProgressBarRefresh();
-
-                // Is quit signalled? We only check it when tools not showing to prevent another instance loading
-                // and closing our app while using the tools menu
-                if (_shutdownEvent.WaitOne(0))
-                {
-                    // Close form, and don't restart timer
-                    Close();
-                }
+                // Close form, and don't restart timer
+                Close();
             }
 
             // Restart timer

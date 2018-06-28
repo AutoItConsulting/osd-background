@@ -17,7 +17,9 @@ namespace AutoIt.OSD.Background
         {
             if (disposing && (components != null))
             {
-                _shutdownEvent.Dispose();
+                _eventShutdownRequested.Dispose();
+                _eventNewOptionsAvailable.Dispose();
+
                 _keyboardHook.Dispose();
 
                 if (_namedPipeServerStream != null)
@@ -25,9 +27,9 @@ namespace AutoIt.OSD.Background
                     _namedPipeServerStream.Dispose();
                 }
 
-                if (_applicationMutex != null)
+                if (_mutexApplication != null)
                 {
-                    _applicationMutex.Dispose();
+                    _mutexApplication.Dispose();
                 }
 
                 components.Dispose();
@@ -63,7 +65,7 @@ namespace AutoIt.OSD.Background
             // 
             // timerRefresh
             // 
-            this.timerRefresh.Tick += new System.EventHandler(this.timerRefresh_Tick);
+            this.timerRefresh.Tick += new System.EventHandler(this.TimerHandleTickEvent);
             // 
             // progressBar
             // 
@@ -95,7 +97,6 @@ namespace AutoIt.OSD.Background
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "OSD Branding";
-            this.Activated += new System.EventHandler(this.FormBackground_Activated);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormBackground_FormClosing);
             this.Load += new System.EventHandler(this.FormBackground_Load);
             this.Shown += new System.EventHandler(this.FormBackground_Shown);

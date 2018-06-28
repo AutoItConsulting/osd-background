@@ -21,22 +21,25 @@ namespace AutoIt.OSD.Background
     {
         private readonly string _appPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location).ToString();
         private readonly DataGridViewCellStyle _rowStyleReadOnly;
-        private readonly Options _xmlOptions;
+        private readonly Options _options;
         private Dictionary<string, string> _taskSequenceDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
         private bool _taskSequenceVariablesEnabled;
         private bool _taskSequenceVariablesAllowEdit;
         private bool _userToolsEnabled;
         private readonly PasswordMode _passwordMode;
+        private readonly string _osdBackgroundDir;
 
         /// <summary>
         ///     Constructor.
         /// </summary>
-        /// <param name="xmlOptions"></param>
+        /// <param name="options"></param>
         /// <param name="passwordMode"></param>
-        public FormTools(Options xmlOptions, PasswordMode passwordMode)
+        /// <param name="osdBackgroundDir"></param>
+        public FormTools(Options options, PasswordMode passwordMode, string osdBackgroundDir)
         {
-            _xmlOptions = xmlOptions;
+            _options = options;
             _passwordMode = passwordMode;
+            _osdBackgroundDir = osdBackgroundDir;
 
             InitializeComponent();
 
@@ -45,6 +48,11 @@ namespace AutoIt.OSD.Background
             {
                 Font = new Font(dgvTaskSequenceVariables.Font, FontStyle.Italic)
             };
+
+            // Enable quit button if debugging
+#if DEBUG
+            buttonCloseApp.Visible = true;
+#endif
         }
 
         /// <summary>
@@ -67,8 +75,17 @@ namespace AutoIt.OSD.Background
         {
             var userTool = (UserTool)listBoxUserTools.SelectedItem;
 
+            RunUserTool(userTool);
+        }
+
+        /// <summary>
+        /// Takes a user tool object and runs it.
+        /// </summary>
+        /// <param name="userTool"></param>
+        private void RunUserTool(UserTool userTool)
+        {
             // Set environment variable so user tools can reference this path
-            Environment.SetEnvironmentVariable("OSDBackgoundExeDir", _appPath);
+            Environment.SetEnvironmentVariable("OSDBackgoundExeDir", _osdBackgroundDir);
 
             // Expand environment variables
             string program = Environment.ExpandEnvironmentVariables(userTool.Program);
@@ -243,18 +260,18 @@ namespace AutoIt.OSD.Background
         private void FormTools_Load(object sender, EventArgs e)
         {
             // Set title
-            Text = _xmlOptions.Title;
+            Text = _options.Title;
 
             // Set main icon
             Icon = Resources.main;
 
-            _userToolsEnabled = (_xmlOptions.UserTools.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
-                                (_xmlOptions.UserTools.EnabledUser && _passwordMode == PasswordMode.User);
+            _userToolsEnabled = (_options.UserTools.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
+                                (_options.UserTools.EnabledUser && _passwordMode == PasswordMode.User);
 
-            _taskSequenceVariablesEnabled = (_xmlOptions.TaskSequenceVariables.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
-                                            (_xmlOptions.TaskSequenceVariables.EnabledUser && _passwordMode == PasswordMode.User);
+            _taskSequenceVariablesEnabled = (_options.TaskSequenceVariables.EnabledAdmin && _passwordMode == PasswordMode.Admin) ||
+                                            (_options.TaskSequenceVariables.EnabledUser && _passwordMode == PasswordMode.User);
 
-            _taskSequenceVariablesAllowEdit = _xmlOptions.TaskSequenceVariables.EnabledAdmin && _xmlOptions.TaskSequenceVariables.AllowEdit && _passwordMode == PasswordMode.Admin;
+            _taskSequenceVariablesAllowEdit = _options.TaskSequenceVariables.EnabledAdmin && _options.TaskSequenceVariables.AllowEdit && _passwordMode == PasswordMode.Admin;
 
             // Showing the tools tab?
             if (_userToolsEnabled)
@@ -262,7 +279,7 @@ namespace AutoIt.OSD.Background
                 // Populate filtered tools list depending on access level
                 var filteredTools = new List<UserTool>();
 
-                foreach (UserTool tool in _xmlOptions.UserTools.UserToolList)
+                foreach (UserTool tool in _options.UserTools.UserToolList)
                 {
                     if (tool.AdminOnly)
                     {

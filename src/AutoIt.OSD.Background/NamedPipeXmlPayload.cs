@@ -1,4 +1,4 @@
-﻿//  
+﻿// 
 // Copyright (c) AutoIt Consulting Ltd. All rights reserved.  
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.  
 // using System;
@@ -15,23 +15,13 @@ namespace AutoIt.OSD.Background
     public class NamedPipeXmlPayload
     {
         /// <summary>
-        ///     Constructor.
-        /// </summary>
-        /// <param name="signalQuit"></param>
-        /// <param name="xmlOptions"></param>
-        public NamedPipeXmlPayload(bool signalQuit, Options xmlOptions)
-        {
-            SignalQuit = signalQuit;
-            Options = xmlOptions;
-        }
-
-        /// <summary>
         ///     Constructor. Needs a parameterless constructor for serializing.
         /// </summary>
         public NamedPipeXmlPayload()
         {
             SignalQuit = false;
             Options = new Options();
+            OsdBackgroundDir = string.Empty;
         }
 
         /// <summary>
@@ -45,5 +35,17 @@ namespace AutoIt.OSD.Background
         /// </summary>
         [XmlElement("SignalQuit")]
         public bool SignalQuit { get; set; }
+
+        /// <summary>
+        ///     The script dir that the exe was launched from.
+        /// </summary>
+        [XmlElement("OsdBackgroundDir")]
+        public string OsdBackgroundDir { get; set; }
+
+        /// <summary>
+        ///     The working directory at time of launch.
+        /// </summary>
+        [XmlElement("OsdBackgroundWorkingDir")]
+        public string OsdBackgroundWorkingDir { get; set; }
     }
 }

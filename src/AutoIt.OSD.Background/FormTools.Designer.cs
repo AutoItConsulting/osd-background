@@ -168,12 +168,12 @@
             // buttonCloseTools
             // 
             this.buttonCloseTools.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.buttonCloseTools.Location = new System.Drawing.Point(15, 462);
+            this.buttonCloseTools.Location = new System.Drawing.Point(257, 462);
             this.buttonCloseTools.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.buttonCloseTools.Name = "buttonCloseTools";
             this.buttonCloseTools.Size = new System.Drawing.Size(191, 28);
             this.buttonCloseTools.TabIndex = 1;
-            this.buttonCloseTools.Text = "Close and Stay Running";
+            this.buttonCloseTools.Text = "Close";
             this.buttonCloseTools.UseVisualStyleBackColor = true;
             // 
             // buttonCloseApp
@@ -184,8 +184,9 @@
             this.buttonCloseApp.Name = "buttonCloseApp";
             this.buttonCloseApp.Size = new System.Drawing.Size(191, 28);
             this.buttonCloseApp.TabIndex = 2;
-            this.buttonCloseApp.Text = "Close and Exit";
+            this.buttonCloseApp.Text = "Debug Exit App";
             this.buttonCloseApp.UseVisualStyleBackColor = true;
+            this.buttonCloseApp.Visible = false;
             this.buttonCloseApp.Click += new System.EventHandler(this.buttonCloseApp_Click);
             // 
             // FormTools
