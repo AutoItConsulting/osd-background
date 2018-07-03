@@ -55,9 +55,7 @@ namespace AutoIt.OSD.Background
 
         private Mutex _mutexApplication;
 
-        private IAsyncResult _namedPipeAsyncResult;
         private NamedPipeServerStream _namedPipeServerStream;
-        private Thread _namedPipeServerThread;
         private NamedPipeXmlPayload _namedPipeXmlPayload;
 
         private Options _options;
@@ -224,13 +222,10 @@ namespace AutoIt.OSD.Background
             // Dispose keyboard hook
             _keyboardHook.Dispose();
 
-            // Flag quit signal in case any thread is mid execution. Timer is stopped so it won't trigger another Close() call.
-            _eventShutdownRequested.Set();
-
-            // Give the server thread time to stop before foricbly terminating it
-            if (_namedPipeServerThread != null && !_namedPipeServerThread.Join(5000))
+            // Dispose the named pipe steam
+            if (_namedPipeServerStream != null)
             {
-                _namedPipeServerThread.Abort();
+                _namedPipeServerStream.Dispose();
             }
 
             // Close our mutex
@@ -284,12 +279,8 @@ namespace AutoIt.OSD.Background
             // By default assume not in a task sequence
             _startedInTaskSequence = false;
 
-            // Create a new background thread and start it
-            _namedPipeServerThread = new Thread(NamedPipeServerThreadFunc)
-            {
-                IsBackground = true
-            };
-            _namedPipeServerThread.Start();
+            // Create a new pipe - it will return immediately and async wait for connections
+            NamedPipeServerCreateServer();
         }
 
         /// <summary>
@@ -444,7 +435,7 @@ namespace AutoIt.OSD.Background
         }
 
         /// <summary>
-        ///     The function called when a client connects to the named pipe.
+        ///     The function called when a client connects to the named pipe. Note: this runs on a new thread.
         /// </summary>
         /// <param name="iAsyncResult"></param>
         private void NamedPipeServerConnectionCallback(IAsyncResult iAsyncResult)
@@ -452,7 +443,7 @@ namespace AutoIt.OSD.Background
             try
             {
                 // End waiting for the connection
-                _namedPipeServerStream.EndWaitForConnection(_namedPipeAsyncResult);
+                _namedPipeServerStream.EndWaitForConnection(iAsyncResult);
 
                 // Read data and prevent access to _namedPipeXmlPayload during threaded operations
                 lock (_namedPiperServerThreadLock)
@@ -475,7 +466,7 @@ namespace AutoIt.OSD.Background
             }
             catch (ObjectDisposedException)
             {
-                // EndWaitForConnection will exception when someone calls .Close() before a connection received
+                // EndWaitForConnection will exception when someone calls .Close()/Dispose() before a connection received
                 // In that case we dont create any more pipes and just return
                 // This will happen when app is closing and our pipe is closed
                 return;
@@ -487,13 +478,7 @@ namespace AutoIt.OSD.Background
             finally
             {
                 // Close the original server (we have to create a new one each time)
-                if (_namedPipeServerStream != null)
-                {
-                    _namedPipeServerStream.Dispose();
-                    _namedPipeServerStream = null;
-                }
-
-                _namedPipeAsyncResult = null;
+                _namedPipeServerStream.Dispose();
             }
 
             // Create a new pipe for next connection
@@ -505,12 +490,6 @@ namespace AutoIt.OSD.Background
         /// </summary>
         private void NamedPipeServerCreateServer()
         {
-            if (_namedPipeServerStream != null)
-            {
-                // Already a pipe setup, just return
-                return;
-            }
-
             // Create a new pipe accessible by local authenticated users, disallow network
             //var sidAuthUsers = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
             var sidNetworkService = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
@@ -545,25 +524,24 @@ namespace AutoIt.OSD.Background
                 0,
                 pipeSecurity);
 
-            _namedPipeAsyncResult = _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
+            // Start the async named pipe wait for connection. 
+            _namedPipeServerStream.BeginWaitForConnection(NamedPipeServerConnectionCallback, _namedPipeServerStream);
         }
 
         /// <summary>
-        ///     The main worker thread. This runs until the service stops.
+        ///     Called when a quit request has been received.
         /// </summary>
-        private void NamedPipeServerThreadFunc()
+        private void NamedPipeThreadEvent_Close()
         {
-            // Create a new pipe 
-            NamedPipeServerCreateServer();
-
-            // Wait until we get asked to shutdown
-            _eventShutdownRequested.WaitOne();
-
-            // Close pipe if it's currently waiting
-            if (_namedPipeServerStream != null)
+            if (InvokeRequired)
             {
-                _namedPipeServerStream.Dispose();
+                // Invoke this same function the the UI thread of the form
+                Invoke((MethodInvoker)NamedPipeThreadEvent_Close);
+                return;
             }
+
+            // Close the form
+            Close();
         }
 
         /// <summary>
